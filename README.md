@@ -1,16 +1,15 @@
-# nfs-subdir-external-provisioner
+# kubernetes nfs-client-provisioner
+- pv provisioned as ${namespace}-${pvcName}-${pvName}
+- pv recycled as archieved-${namespace}-${pvcName}-${pvName}
 
-Dynamic sub-dir volume provisioner on a remote NFS server.
+# deploy
+- modify and deploy `deploy/deployment.yaml`
+- modify and deploy `deploy/class.yaml`
 
-## Community, discussion, contribution, and support
-
-Learn how to engage with the Kubernetes community on the [community page](http://kubernetes.io/community/).
-
-You can reach the maintainers of this project at:
-
-- [Slack](https://kubernetes.slack.com/messages/sig-storage)
-- [Mailing List](https://groups.google.com/forum/#!forum/kubernetes-sig-storage)
-
-### Code of conduct
-
-Participation in the Kubernetes community is governed by the [Kubernetes Code of Conduct](code-of-conduct.md).
+# test
+- `kubectl create -f deploy/test-claim.yaml`
+- `kubectl create -f deploy/test-pod.yaml`
+- check the folder and file "SUCCESS" created
+- `kubectl delete -f deploy/test-pod.yaml`
+- `kubectl delete -f deploy/test-claim.yaml`
+- check the folder renamed
