@@ -12,4 +12,4 @@
 - check the folder and file "SUCCESS" created
 - `kubectl delete -f deploy/test-pod.yaml`
 - `kubectl delete -f deploy/test-claim.yaml`
-- check the folder renamed to `archieve-???`
+- check the folder renamed to `archived-???`
