@@ -1,4 +1,10 @@
 # kubernetes nfs-client-provisioner
+
+[![Docker Repository on Quay](https://quay.io/repository/external_storage/nfs-client-provisioner/status "Docker Repository on Quay")](https://quay.io/repository/external_storage/nfs-client-provisioner)
+```
+quay.io/external_storage/nfs-client-provisioner:v2.0.0
+```
+
 - pv provisioned as ${namespace}-${pvcName}-${pvName}
 - pv recycled as archieved-${namespace}-${pvcName}-${pvName}
 
