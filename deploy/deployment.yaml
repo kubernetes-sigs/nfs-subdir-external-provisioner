@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: nfs-client-provisioner
-          image: quay.io/external_storage/nfs-client-provisioner:v1
+          image: quay.io/external_storage/nfs-client-provisioner:v2.0.0
           volumeMounts:
             - name: nfs-client-root
               mountPath: /persistentvolumes
