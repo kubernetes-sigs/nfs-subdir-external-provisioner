@@ -71,7 +71,7 @@ func (p *nfsProvisioner) Provision(options controller.VolumeOptions) (*v1.Persis
 
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: pvName,
+			Name: options.PVName,
 		},
 		Spec: v1.PersistentVolumeSpec{
 			PersistentVolumeReclaimPolicy: options.PersistentVolumeReclaimPolicy,
