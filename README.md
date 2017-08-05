@@ -12,6 +12,9 @@ quay.io/external_storage/nfs-client-provisioner:v2.0.0
 - modify and deploy `deploy/deployment.yaml`
 - modify and deploy `deploy/class.yaml`
 
+## ARM based
+To deploy on ARM based (Raspberry PI) use `deploy/deployment-arm.yaml` instead of `deploy/deployment.yaml`
+
 # authorization
 
 If your cluster has RBAC enabled or you are running OpenShift you must
