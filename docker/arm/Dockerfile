@@ -1,4 +1,3 @@
-#!/bin/sh
 # Copyright 2017 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,4 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CGO_ENABLED=0 go build ./cmd/nfs-client-provisioner #&& docker build -t quay.io/jackieli/nfs-client-provisioner .
+FROM hypriot/rpi-alpine:3.6
+RUN apk update --no-cache && apk add ca-certificates
+COPY nfs-client-provisioner /nfs-client-provisioner
+ENTRYPOINT ["/nfs-client-provisioner"]
