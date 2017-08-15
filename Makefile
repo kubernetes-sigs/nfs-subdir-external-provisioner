@@ -34,12 +34,12 @@ build_arm:
 	CGO_ENABLED=0 GOARCH=arm GOARM=7 go build -o docker/arm/nfs-client-provisioner ./cmd/nfs-client-provisioner 
 	
 image:
-	sudo docker build -t $(IMAGE) docker/x86_64
+	sudo docker build -t $(MUTABLE_IMAGE) docker/x86_64
 	sudo docker tag $(MUTABLE_IMAGE) $(IMAGE)
 
 image_arm:
 	sudo docker run --rm --privileged multiarch/qemu-user-static:register --reset
-	sudo docker build -t $(IMAGE_ARM) docker/arm
+	sudo docker build -t $(MUTABLE_IMAGE_ARM) docker/arm
 	sudo docker tag $(MUTABLE_IMAGE_ARM) $(IMAGE_ARM)
 
 push:
