@@ -28,19 +28,19 @@ all: build image build_arm image_arm
 container: build image build_arm image_arm
 
 build:
-	CGO_ENABLED=0 go build -o docker/x86_64/nfs-client-provisioner ./cmd/nfs-client-provisioner
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o docker/x86_64/nfs-client-provisioner ./cmd/nfs-client-provisioner
 
 build_arm:
-	CGO_ENABLED=0 GOARCH=arm GOARM=7 go build -o docker/arm/nfs-client-provisioner ./cmd/nfs-client-provisioner 
-	
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -a -ldflags '-extldflags "-static"' -o docker/arm/nfs-client-provisioner ./cmd/nfs-client-provisioner 
+
 image:
-	sudo docker build -t $(MUTABLE_IMAGE) docker/x86_64
-	sudo docker tag $(MUTABLE_IMAGE) $(IMAGE)
+	docker build -t $(MUTABLE_IMAGE) docker/x86_64
+	docker tag $(MUTABLE_IMAGE) $(IMAGE)
 
 image_arm:
-	sudo docker run --rm --privileged multiarch/qemu-user-static:register --reset
-	sudo docker build -t $(MUTABLE_IMAGE_ARM) docker/arm
-	sudo docker tag $(MUTABLE_IMAGE_ARM) $(IMAGE_ARM)
+	docker run --rm --privileged multiarch/qemu-user-static:register --reset
+	docker build -t $(MUTABLE_IMAGE_ARM) docker/arm
+	docker tag $(MUTABLE_IMAGE_ARM) $(IMAGE_ARM)
 
 push:
 	docker push $(IMAGE)
