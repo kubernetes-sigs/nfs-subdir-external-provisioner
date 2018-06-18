@@ -26,7 +26,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/kubernetes-incubator/external-storage/lib/controller"
-	"github.com/pkg/xattr"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -65,9 +64,6 @@ func (p *nfsProvisioner) Provision(options controller.VolumeOptions) (*v1.Persis
 	glog.V(4).Infof("creating path %s", fullPath)
 	if err := os.MkdirAll(fullPath, 0777); err != nil {
 		return nil, errors.New("unable to create directory to provision new pv: " + err.Error())
-	}
-	if err := xattr.Set(fullPath, "namespace", []byte(pvcNamespace)); err != nil {
-		return nil, errors.New("unable to set extended attributes on directory to provision new pv: " + err.Error())
 	}
 	os.Chmod(fullPath, 0777)
 
