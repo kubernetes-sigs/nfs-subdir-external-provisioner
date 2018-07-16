@@ -96,6 +96,10 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
 	pvName := filepath.Base(path)
 	oldPath := filepath.Join(mountPath, pvName)
+	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
+		glog.Warningf("path %s does not exist, deletion skipped", oldPath)
+		return nil
+	}
 	archivePath := filepath.Join(mountPath, "archived-"+pvName)
 	glog.V(4).Infof("archiving path %s to %s", oldPath, archivePath)
 	return os.Rename(oldPath, archivePath)
