@@ -6,7 +6,6 @@
 `nfs-client` is an automatic provisioner that used your *already configured* NFS server, automatically creating Persistent Volumes.
 
 - Persistent volumes are provisioned as ${namespace}-${pvcName}-${pvName}
-- Persistent volumes which are recycled as archieved-${namespace}-${pvcName}-${pvName}
 
 # How to deploy nfs-client to your cluster.
 
@@ -41,6 +40,8 @@ kind: StorageClass
 metadata:
   name: managed-nfs-storage
 provisioner: fuseim.pri/ifs # or choose another name, must match deployment's env PROVISIONER_NAME'
+parameters:
+  archiveOnDelete: "false" # When set to "false" your PVs will not be archived by the provisioner upon deletion of the PVC.
 ```
 
 2. Authorization
@@ -82,7 +83,7 @@ Now check your NFS Server for the file `SUCCESS`.
 kubectl delete -f deploy/test-pod.yaml -f deploy/test-claim.yaml
 ```
 
-Now check the folder renamed to `archived-???`.
+Now check the folder has been deleted.
 
 4. Deploying your own PersistentVolumeClaim
 
