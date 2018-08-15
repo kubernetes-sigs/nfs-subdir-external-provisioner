@@ -113,12 +113,14 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	// If it exists and has a falsey value, delete the directory.
 	// Otherwise, archive it.
 	archiveOnDelete, exists := storageClass.Parameters["archiveOnDelete"]
-	archiveBool, err := strconv.ParseBool(archiveOnDelete)
-	if err != nil {
-		return err
-	}
-	if exists && !archiveBool {
-		return os.RemoveAll(oldPath)
+	if exists {
+		archiveBool, err := strconv.ParseBool(archiveOnDelete)
+		if err != nil {
+			return err
+		}
+		if !archiveBool {
+			return os.RemoveAll(oldPath)
+		}
 	}
 
 	archivePath := filepath.Join(mountPath, "archived-"+pvName)
