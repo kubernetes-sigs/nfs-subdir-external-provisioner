@@ -27,7 +27,7 @@ clusterrolebinding "run-nfs-client-provisioner" created
 
 OpenShift:
 
-On some installations of OpenShift the default admin user does not have cluster-admin permissions. If these commands fail refer to the Red Hat OpenShift documentation for **User and Role Management** or contact Red Hat support to help you grant the right permissions to your admin user. 
+On some installations of OpenShift the default admin user does not have cluster-admin permissions. If these commands fail refer to the OpenShift documentation for **User and Role Management** or contact your OpenShift provider to help you grant the right permissions to your admin user. 
 
 ```sh
 $ oc create -f deploy/auth/openshift-clusterrole.yaml -f deploy/auth/serviceaccount.yaml
