@@ -41,7 +41,7 @@ $ oadm policy add-cluster-role-to-user nfs-client-provisioner-runner system:serv
 
 Note: To deploy to an ARM-based environment, use: `deploy/deployment-arm.yaml` instead, otherwise use `deploy/deployment.yaml`.
 
-Next you must edit the provisioner's deployment file to add connection information for your NFS server. Edit `deploy/deployment.yaml` and replace the two occurances of <YOUR NFS SERVER HOSTNAME> with your server's hostname.
+Next you must edit the provisioner's deployment file to add connection information for your NFS server. Edit `deploy/deployment.yaml` and replace the two occurences of <YOUR NFS SERVER HOSTNAME> with your server's hostname.
 
 ```yaml
 kind: Deployment
