@@ -14,15 +14,15 @@ To note again, you must *already* have an NFS Server.
 
 Get all of the files in the [deploy](https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client/deploy) directory of this repository. These instructions assume that you have cloned the [external-storage](https://github.com/kubernetes-incubator/external-storage) repository and have a bash-shell open in the ``nfs-client`` directory.
 
-**Step 3: Setup authorization**. If your cluster has RBAC enabled or you are running OpenShift you must authorize the provisioner. If you are in a namespace/project other than "default" either edit `deploy/auth/clusterrolebinding.yaml` or edit the `oadm policy` command accordingly.
+**Step 3: Setup authorization**. If your cluster has RBAC enabled or you are running OpenShift you must authorize the provisioner. If you are in a namespace/project other than "default" edit `deploy/rbac.yaml`.
 
 Kubernetes:
 
 ```sh
-$ kubectl create -f deploy/auth/serviceaccount.yaml -f deploy/auth/clusterrole.yaml -f deploy/auth/clusterrolebinding.yaml
-serviceaccount "nfs-client-provisioner" created
-clusterrole "nfs-client-provisioner-runner" created
-clusterrolebinding "run-nfs-client-provisioner" created
+# Set the subject of the RBAC objects to the current namespace where the provisioner is being deployed
+$ NAMESPACE=`oc project -q`
+$ sed -i'' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml
+$ kubectl create -f deploy/rbac.yaml
 ```
 
 OpenShift:
@@ -30,11 +30,11 @@ OpenShift:
 On some installations of OpenShift the default admin user does not have cluster-admin permissions. If these commands fail refer to the OpenShift documentation for **User and Role Management** or contact your OpenShift provider to help you grant the right permissions to your admin user. 
 
 ```sh
-$ oc create -f deploy/auth/openshift-clusterrole.yaml -f deploy/auth/serviceaccount.yaml
-serviceaccount "nfs-client-provisioner" created
-clusterrole "nfs-client-provisioner-runner" created
-$ oadm policy add-scc-to-user hostmount-anyuid system:serviceaccount:default:nfs-client-provisioner
-$ oadm policy add-cluster-role-to-user nfs-client-provisioner-runner system:serviceaccount:default:nfs-client-provisioner
+# Set the subject of the RBAC objects to the current namespace where the provisioner is being deployed
+$ NAMESPACE=`oc project -q`
+$ sed -i'' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml
+$ oc create -f deploy/rbac.yaml
+$ oadm policy add-scc-to-user hostmount-anyuid system:serviceaccount:$NAMESPACE:nfs-client-provisioner
 ```
 
 **Step 4: Configure the NFS-Client provisioner**
