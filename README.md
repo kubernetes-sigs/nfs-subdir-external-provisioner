@@ -8,9 +8,9 @@
 
 To note again, you must *already* have an NFS Server.
 
-**Step 1: Get connection information for your NFS server**. Make sure your NFS server as accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.
+**Step 1: Get connection information for your NFS server**. Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.
 
-**Step 2: Get the NFS-Client Provisioner files**. To setup the provisioner you will download a set of YAML files, edit them to add your NFS server's connection information and then apply each with the ``oc`` command. 
+**Step 2: Get the NFS-Client Provisioner files**. To setup the provisioner you will download a set of YAML files, edit them to add your NFS server's connection information and then apply each with the  ``kubectl`` / ``oc`` command. 
 
 Get all of the files in the [deploy](https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client/deploy) directory of this repository. These instructions assume that you have cloned the [external-storage](https://github.com/kubernetes-incubator/external-storage) repository and have a bash-shell open in the ``nfs-client`` directory.
 
