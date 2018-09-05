@@ -20,7 +20,8 @@ Kubernetes:
 
 ```sh
 # Set the subject of the RBAC objects to the current namespace where the provisioner is being deployed
-$ NAMESPACE=`oc project -q`
+$ NS=$(kubectl config get-contexts|grep -e "^\*" |awk '{print $5}')
+$ NAMESPACE=${NS:-default}
 $ sed -i'' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml
 $ kubectl create -f deploy/rbac.yaml
 ```
