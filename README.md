@@ -8,6 +8,18 @@
 
 To note again, you must *already* have an NFS Server.
 
+## With Helm
+
+Follow the instructions for the stable helm chart maintained at https://github.com/helm/charts/tree/master/stable/nfs-client-provisioner
+
+The tl;dr is
+
+```bash
+$ helm install stable/nfs-client-provisioner --set nfs.server=x.x.x.x --set nfs.path=/exported/path
+```
+
+## Without Helm
+
 **Step 1: Get connection information for your NFS server**. Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.
 
 **Step 2: Get the NFS-Client Provisioner files**. To setup the provisioner you will download a set of YAML files, edit them to add your NFS server's connection information and then apply each with the ``kubectl`` / ``oc`` command. 
