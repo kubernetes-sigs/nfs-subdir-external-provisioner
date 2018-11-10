@@ -110,7 +110,7 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 		return err
 	}
 	// Determine if the "archiveOnDelete" parameter exists.
-	// If it exists and has a falsey value, delete the directory.
+	// If it exists and has a false value, delete the directory.
 	// Otherwise, archive it.
 	archiveOnDelete, exists := storageClass.Parameters["archiveOnDelete"]
 	if exists {
