@@ -16,7 +16,7 @@ spec:
       labels:
         app: nfs-client-provisioner
     spec:
-      serviceAccount: nfs-client-provisioner
+      serviceAccountName: nfs-client-provisioner
       containers:
         - name: nfs-client-provisioner
           image: quay.io/external_storage/nfs-client-provisioner-arm:latest
@@ -27,11 +27,11 @@ spec:
             - name: PROVISIONER_NAME
               value: fuseim.pri/ifs
             - name: NFS_SERVER
-              value: 192.168.1.20
+              value: 10.10.10.60
             - name: NFS_PATH
-              value: /mnt/kube_nfs
+              value: /ifs/kubernetes
       volumes:
         - name: nfs-client-root
           nfs:
-            server: 192.168.1.20
-            path: /mnt/kube_nfs
+            server: 10.10.10.60
+            path: /ifs/kubernetes
