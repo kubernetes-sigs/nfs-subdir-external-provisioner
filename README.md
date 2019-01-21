@@ -1,4 +1,4 @@
-# [csi-build-rules](https://github.com/kubernetes-csi/csi-build-rules)
+# [csi-release-tools](https://github.com/kubernetes-csi/csi-release-tools)
 
 These build and test rules can be shared between different Go projects
 without modifications. Customization for the different projects happen
@@ -19,9 +19,9 @@ The expected repository layout is:
  - `cmd/*/*.go` - source code for each command
  - `cmd/*/Dockerfile` - docker file for each command or
    Dockerfile in the root when only building a single command
- - `Makefile` - includes `build-rules/build.make` and sets
+ - `Makefile` - includes `release-tools/build.make` and sets
    configuration variables
- - `.travis.yml` - a symlink to `build-rules/.travis.yml`
+ - `.travis.yml` - a symlink to `release-tools/.travis.yml`
 
 To create a release, tag a certain revision with a name that
 starts with `v`, for example `v1.0.0`, then `make push`
@@ -40,11 +40,12 @@ Sharing and updating
 
 [`git subtree`](https://github.com/git/git/blob/master/contrib/subtree/git-subtree.txt)
 is the recommended way of maintaining a copy of the rules inside the
-`build-rules` directory of a project. This way, it is possible to make
+`release-tools` directory of a project. This way, it is possible to make
 changes also locally, test them and then push them back to the shared
 repository at a later time.
 
 Cheat sheet:
 
-- `git subtree pull --prefix=build-rules https://github.com/kubernetes-csi/csi-build-rules.git master` - update local copy to latest upstream
-- edit, `git commit`, `git subtree push --prefix=build-rules git@github.com:<user>/csi-build-rules.git <my-new-or-existing-branch>` - push to a new branch before submitting a PR
+- `git subtree add --prefix=release-tools https://github.com/pohly/csi-release-tools.git master` - add release tools to a repo which does not have them yet (only once)
+- `git subtree pull --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - update local copy to latest upstream (whenever upstream changes)
+- edit, `git commit`, `git subtree push --prefix=release-tools git@github.com:<user>/csi-release-tools.git <my-new-or-existing-branch>` - push to a new branch before submitting a PR
