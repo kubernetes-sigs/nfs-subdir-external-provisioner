@@ -46,6 +46,6 @@ repository at a later time.
 
 Cheat sheet:
 
-- `git subtree add --prefix=release-tools https://github.com/pohly/csi-release-tools.git master` - add release tools to a repo which does not have them yet (only once)
+- `git subtree add --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - add release tools to a repo which does not have them yet (only once)
 - `git subtree pull --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - update local copy to latest upstream (whenever upstream changes)
 - edit, `git commit`, `git subtree push --prefix=release-tools git@github.com:<user>/csi-release-tools.git <my-new-or-existing-branch>` - push to a new branch before submitting a PR
