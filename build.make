@@ -112,3 +112,9 @@ test-fmt:
 		gofmt -d $$files; \
 		false; \
 	fi
+
+.PHONY: test-subtree
+test: test-subtree
+test-subtree:
+	@ echo; echo $@
+	./release-tools/verify-subtree.sh release-tools
