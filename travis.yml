@@ -6,7 +6,7 @@ matrix:
   include:
   - go: 1.11.1
 script:
-- make all test
+- make -k all test
 after_success:
   - if [ "${TRAVIS_PULL_REQUEST}" == "false" ]; then
       docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}" quay.io;

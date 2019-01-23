@@ -89,11 +89,32 @@ clean:
 	-rm -rf bin
 
 test:
+
+.PHONY: test-go
+test: test-go
+test-go:
+	@ echo; echo $@
 	go test `go list ./... | grep -v 'vendor'` $(TESTARGS)
+
+.PHONY: test-vet
+test: test-vet
+test-vet:
+	@ echo; echo $@
 	go vet `go list ./... | grep -v vendor`
+
+.PHONY: test-fmt
+test: test-fmt
+test-fmt:
+	@ echo; echo $@
 	files=$$(find . -name '*.go' | grep -v './vendor'); \
 	if [ $$(gofmt -d $$files | wc -l) -ne 0 ]; then \
 		echo "formatting errors:"; \
 		gofmt -d $$files; \
 		false; \
 	fi
+
+.PHONY: test-subtree
+test: test-subtree
+test-subtree:
+	@ echo; echo $@
+	./release-tools/verify-subtree.sh release-tools
