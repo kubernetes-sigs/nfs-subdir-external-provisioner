@@ -51,6 +51,7 @@ IMAGE_TAGS+=$(shell tagged="$$(git describe --tags --match='v*' --abbrev=0)"; if
 IMAGE_NAME=$(REGISTRY_NAME)/$*
 
 ifdef V
+# Adding "-alsologtostderr" assumes that all test binaries contain glog. This is not guaranteed.
 TESTARGS = -v -args -alsologtostderr -v 5
 else
 TESTARGS =
