@@ -57,6 +57,9 @@ else
 TESTARGS =
 endif
 
+# Specific packages can be excluded from each of the tests below by setting the *_FILTER_CMD variables
+# to something like "| grep -v 'github.com/kubernetes-csi/project/pkg/foobar'". See usage below.
+
 build-%:
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$* ./cmd/$*
@@ -95,19 +98,19 @@ test:
 test: test-go
 test-go:
 	@ echo; echo $@
-	go test `go list ./... | grep -v 'vendor'` $(TESTARGS)
+	go test `go list ./... | grep -v 'vendor' $(TEST_GO_FILTER_CMD)` $(TESTARGS)
 
 .PHONY: test-vet
 test: test-vet
 test-vet:
 	@ echo; echo $@
-	go vet `go list ./... | grep -v vendor`
+	go vet `go list ./... | grep -v vendor $(TEST_VET_FILTER_CMD)`
 
 .PHONY: test-fmt
 test: test-fmt
 test-fmt:
 	@ echo; echo $@
-	files=$$(find . -name '*.go' | grep -v './vendor'); \
+	files=$$(find . -name '*.go' | grep -v './vendor' $(TEST_FMT_FILTER_CMD)); \
 	if [ $$(gofmt -d $$files | wc -l) -ne 0 ]; then \
 		echo "formatting errors:"; \
 		gofmt -d $$files; \
