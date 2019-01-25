@@ -51,10 +51,14 @@ IMAGE_TAGS+=$(shell tagged="$$(git describe --tags --match='v*' --abbrev=0)"; if
 IMAGE_NAME=$(REGISTRY_NAME)/$*
 
 ifdef V
+# Adding "-alsologtostderr" assumes that all test binaries contain glog. This is not guaranteed.
 TESTARGS = -v -args -alsologtostderr -v 5
 else
 TESTARGS =
 endif
+
+# Specific packages can be excluded from each of the tests below by setting the *_FILTER_CMD variables
+# to something like "| grep -v 'github.com/kubernetes-csi/project/pkg/foobar'". See usage below.
 
 build-%:
 	mkdir -p bin
@@ -93,20 +97,20 @@ test:
 .PHONY: test-go
 test: test-go
 test-go:
-	@ echo; echo $@
-	go test `go list ./... | grep -v 'vendor'` $(TESTARGS)
+	@ echo; echo "### $@:"
+	go test `go list ./... | grep -v 'vendor' $(TEST_GO_FILTER_CMD)` $(TESTARGS)
 
 .PHONY: test-vet
 test: test-vet
 test-vet:
-	@ echo; echo $@
-	go vet `go list ./... | grep -v vendor`
+	@ echo; echo "### $@:"
+	go vet `go list ./... | grep -v vendor $(TEST_VET_FILTER_CMD)`
 
 .PHONY: test-fmt
 test: test-fmt
 test-fmt:
-	@ echo; echo $@
-	files=$$(find . -name '*.go' | grep -v './vendor'); \
+	@ echo; echo "### $@:"
+	files=$$(find . -name '*.go' | grep -v './vendor' $(TEST_FMT_FILTER_CMD)); \
 	if [ $$(gofmt -d $$files | wc -l) -ne 0 ]; then \
 		echo "formatting errors:"; \
 		gofmt -d $$files; \
@@ -116,5 +120,5 @@ test-fmt:
 .PHONY: test-subtree
 test: test-subtree
 test-subtree:
-	@ echo; echo $@
+	@ echo; echo "### $@:"
 	./release-tools/verify-subtree.sh release-tools
