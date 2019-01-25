@@ -70,7 +70,7 @@ push-%: container-%
 		docker push $(IMAGE_NAME):$$tag; \
 	}; \
 	for tag in $(IMAGE_TAGS); do \
-		if echo $$tag | grep -q -e '-canary$$'; then \
+		if [ "$$tag" = "canary" ] || echo "$$tag" | grep -q -e '-canary$$'; then \
 			: "creating or overwriting canary image"; \
 			push_image; \
 		elif docker pull $(IMAGE_NAME):$$tag 2>&1 | tee /dev/stderr | grep -q "manifest for $(IMAGE_NAME):$$tag not found"; then \
