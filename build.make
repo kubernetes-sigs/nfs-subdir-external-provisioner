@@ -97,19 +97,19 @@ test:
 .PHONY: test-go
 test: test-go
 test-go:
-	@ echo; echo $@
+	@ echo; echo "### $@:"
 	go test `go list ./... | grep -v 'vendor' $(TEST_GO_FILTER_CMD)` $(TESTARGS)
 
 .PHONY: test-vet
 test: test-vet
 test-vet:
-	@ echo; echo $@
+	@ echo; echo "### $@:"
 	go vet `go list ./... | grep -v vendor $(TEST_VET_FILTER_CMD)`
 
 .PHONY: test-fmt
 test: test-fmt
 test-fmt:
-	@ echo; echo $@
+	@ echo; echo "### $@:"
 	files=$$(find . -name '*.go' | grep -v './vendor' $(TEST_FMT_FILTER_CMD)); \
 	if [ $$(gofmt -d $$files | wc -l) -ne 0 ]; then \
 		echo "formatting errors:"; \
@@ -120,5 +120,5 @@ test-fmt:
 .PHONY: test-subtree
 test: test-subtree
 test-subtree:
-	@ echo; echo $@
+	@ echo; echo "### $@:"
 	./release-tools/verify-subtree.sh release-tools
