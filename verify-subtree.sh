@@ -30,7 +30,7 @@ if [ ! "$DIR" ]; then
     exit 1
 fi
 
-REV=$(git log -n1 --format=format:%H --no-merges -- "$DIR")
+REV=$(git log -n1 --remove-empty --format=format:%H --no-merges -- "$DIR")
 if [ "$REV" ]; then
     echo "Directory '$DIR' contains non-upstream changes:"
     echo
