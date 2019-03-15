@@ -98,7 +98,7 @@ test:
 test: test-go
 test-go:
 	@ echo; echo "### $@:"
-	go test `go list ./... | grep -v 'vendor' $(TEST_GO_FILTER_CMD)` $(TESTARGS)
+	go test `go list ./... | grep -v -e 'vendor' -e '/test/e2e$$' $(TEST_GO_FILTER_CMD)` $(TESTARGS)
 
 .PHONY: test-vet
 test: test-vet
