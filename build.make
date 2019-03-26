@@ -122,3 +122,18 @@ test: test-subtree
 test-subtree:
 	@ echo; echo "### $@:"
 	./release-tools/verify-subtree.sh release-tools
+
+# Components can extend the set of directories which must pass shellcheck.
+# The default is to check only the release-tools directory itself.
+TEST_SHELLCHECK_DIRS=release-tools
+.PHONY: test-shellcheck
+test: test-shellcheck
+test-shellcheck:
+	@ echo; echo "### $@:"
+	@ ret=0; \
+	for dir in $(abspath $(TEST_SHELLCHECK_DIRS)); do \
+		echo; \
+		echo "$$dir:"; \
+		./release-tools/verify-shellcheck.sh "$$dir" || ret=1; \
+	done; \
+	return $$ret
