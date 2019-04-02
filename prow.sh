@@ -15,7 +15,7 @@
 # limitations under the License.
 
 
-# This script runs inside a Prow job. It runs unit tests ("make test")
+# This script runs inside a Prow job. It can run unit tests ("make test")
 # and E2E testing. This E2E testing covers different scenarios (see
 # https://github.com/kubernetes/enhancements/pull/807):
 # - running the stable hostpath example against a Kubernetes release
