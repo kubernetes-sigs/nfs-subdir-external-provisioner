@@ -49,3 +49,15 @@ Cheat sheet:
 - `git subtree add --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - add release tools to a repo which does not have them yet (only once)
 - `git subtree pull --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - update local copy to latest upstream (whenever upstream changes)
 - edit, `git commit`, `git subtree push --prefix=release-tools git@github.com:<user>/csi-release-tools.git <my-new-or-existing-branch>` - push to a new branch before submitting a PR
+
+verify-shellcheck.sh
+--------------------
+
+The [verify-shellcheck.sh](./verify-shellcheck.sh) script in this repo
+is a stripped down copy of the [corresponding
+script](https://github.com/kubernetes/kubernetes/blob/release-1.14/hack/verify-shellcheck.sh)
+in the Kubernetes repository. It can be used to check for certain
+errors shell scripts, like missing quotation marks. The default
+`test-shellcheck` target in [build.make](./build.make) only checks the
+scripts in this directory. Components can add more directories to
+`TEST_SHELLCHECK_DIRS` to check also other scripts.
