@@ -39,6 +39,9 @@
 # - kind (https://github.com/kubernetes-sigs/kind) installed
 # - optional: Go already installed
 
+RELEASE_TOOLS_ROOT="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+REPO_DIR="$(pwd)"
+
 # Sets the default value for a variable if not set already and logs the value.
 # Any variable set this way is usually something that a repo's .prow.sh
 # or the job can set.
@@ -53,7 +56,10 @@ configvar () {
 # If the pre-installed Go is missing or a different
 # version, the required version here will get installed
 # from https://golang.org/dl/.
-configvar CSI_PROW_GO_VERSION_BUILD 1.11.4 "Go version for building the component" # depends on component's source code
+go_from_travis_yml () {
+    grep "^ *- go:" "${RELEASE_TOOLS_ROOT}/travis.yml" | sed -e 's/.*go: *//'
+}
+configvar CSI_PROW_GO_VERSION_BUILD "$(go_from_travis_yml)" "Go version for building the component" # depends on component's source code
 configvar CSI_PROW_GO_VERSION_K8S 1.12.1 "Go version for building Kubernetes for the test cluster" # depends on Kubernetes version
 configvar CSI_PROW_GO_VERSION_E2E 1.12.1 "Go version for building the Kubernetes E2E test suite" # depends on CSI_PROW_E2E settings below
 configvar CSI_PROW_GO_VERSION_SANITY "${CSI_PROW_GO_VERSION_BUILD}" "Go version for building the csi-sanity test suite" # depends on CSI_PROW_SANITY settings below
@@ -261,9 +267,6 @@ configvar CSI_PROW_E2E_SKIP 'while.kubelet.is.down.*Disruptive' "tests that need
 # if not (for example, when invoking manually) it defaults to the work directory.
 configvar ARTIFACTS "${CSI_PROW_WORK}/artifacts" "artifacts"
 mkdir -p "${ARTIFACTS}"
-
-RELEASE_TOOLS_ROOT="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
-REPO_DIR="$(pwd)"
 
 run () {
     echo "$(date) $(go version | sed -e 's/.*version \(go[^ ]*\).*/\1/') $(if [ "$(pwd)" != "${REPO_DIR}" ]; then pwd; fi)\$" "$@" >&2
