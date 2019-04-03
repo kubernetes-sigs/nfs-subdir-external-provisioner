@@ -360,6 +360,9 @@ git_checkout () {
         (cd "$path" && run git fetch "$repo" '+refs/heads/*:refs/remotes/csiprow/heads/*' '+refs/tags/*:refs/tags/*') || die "fetching $repo failed"
         (cd "$path" && run git checkout "$revision") || die "checking out $repo $revision failed"
     fi
+    # This is useful for local testing or when switching between different revisions in the same
+    # repo.
+    (cd "$path" && run git clean -fdx) || die "failed to clean $path"
 }
 
 list_gates () (
@@ -410,10 +413,20 @@ start_cluster () {
             git_checkout https://github.com/kubernetes/kubernetes "$GOPATH/src/k8s.io/kubernetes" "$version" --depth=1 || die "checking out Kubernetes $version failed"
 
             # "kind build" and/or the Kubernetes build rules need at least one tag, which we don't have
-            # when doing a shallow fetch. Therefore we fake one. For some reason, v1.0.0 didn't work
-            # while v1.14.0-fake.1 did.
-            (cd "$GOPATH/src/k8s.io/kubernetes" && run git tag -f v1.14.0-fake.1) || die "git tag failed"
-
+            # when doing a shallow fetch. Therefore we fake one:
+            # release-1.12 -> v1.12.0-release.<rev>.csiprow
+            # latest or <revision> -> v1.14.0-<rev>.csiprow
+            case "${CSI_PROW_KUBERNETES_VERSION}" in
+                release-*)
+                    # Ignore: See if you can use ${variable//search/replace} instead.
+                    # shellcheck disable=SC2001
+                    tag="$(echo "${CSI_PROW_KUBERNETES_VERSION}" | sed -e 's/release-\(.*\)/v\1.0-release./')";;
+                *)
+                    # We have to make something up. v1.0.0 did not work for some reasons.
+                    tag="v1.14.0-";;
+            esac
+            tag="$tag$(cd "$GOPATH/src/k8s.io/kubernetes" && git rev-list --abbrev-commit HEAD).csiprow"
+            (cd "$GOPATH/src/k8s.io/kubernetes" && run git tag -f "$tag") || die "git tag failed"
             go_version="$(go_version_for_kubernetes "$GOPATH/src/k8s.io/kubernetes" "$version")" || die "cannot proceed without knowing Go version for Kubernetes"
             run_with_go "$go_version" kind build node-image --type bazel --image csiprow/node:latest --kube-root "$GOPATH/src/k8s.io/kubernetes" || die "'kind build node-image' failed"
             csi_prow_kind_have_kubernetes=true
