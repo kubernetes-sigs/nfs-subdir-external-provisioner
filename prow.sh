@@ -52,6 +52,19 @@ configvar () {
     eval echo "\$3:" "$1=\${$1}"
 }
 
+# Prints the value of a variable + version suffix, falling back to variable + "LATEST".
+get_versioned_variable () {
+    local var="$1"
+    local version="$2"
+    local value
+
+    eval value="\${${var}_${version}}"
+    if ! [ "$value" ]; then
+        eval value="\${${var}_LATEST}"
+    fi
+    echo "$value"
+}
+
 # Go versions can be specified seperately for different tasks
 # If the pre-installed Go is missing or a different
 # version, the required version here will get installed
@@ -158,9 +171,15 @@ configvar CSI_PROW_HOSTPATH_CANARY "" "hostpath image"
 # all generated files are present.
 #
 # CSI_PROW_E2E_REPO=none disables E2E testing.
-configvar CSI_PROW_E2E_VERSION v1.14.0 "E2E version"
-configvar CSI_PROW_E2E_REPO https://github.com/kubernetes/kubernetes "E2E repo"
-configvar CSI_PROW_E2E_IMPORT_PATH k8s.io/kubernetes "E2E package"
+configvar CSI_PROW_E2E_VERSION_1_13 v1.14.0 "E2E version for Kubernetes 1.13.x" # we can't use the one from 1.13.x because it didn't have --storage.testdriver
+configvar CSI_PROW_E2E_VERSION_1_14 v1.14.0 "E2E version for Kubernetes 1.14.x"
+# TODO: add new CSI_PROW_E2E_VERSION entry for future Kubernetes releases
+configvar CSI_PROW_E2E_VERSION_LATEST master "E2E version for Kubernetes master" # testing against Kubernetes master is already tracking a moving target, so we might as well use a moving E2E version
+configvar CSI_PROW_E2E_REPO_LATEST https://github.com/kubernetes/kubernetes "E2E repo for Kubernetes >= 1.13.x" # currently the same for all versions
+configvar CSI_PROW_E2E_IMPORT_PATH_LATEST k8s.io/kubernetes "E2E package for Kubernetes >= 1.13.x" # currently the same for all versions
+configvar CSI_PROW_E2E_VERSION "$(get_versioned_variable CSI_PROW_E2E_VERSION "${csi_prow_kubernetes_version_suffix}")"  "E2E version"
+configvar CSI_PROW_E2E_REPO "$(get_versioned_variable CSI_PROW_E2E_REPO "${csi_prow_kubernetes_version_suffix}")" "E2E repo"
+configvar CSI_PROW_E2E_IMPORT_PATH "$(get_versioned_variable CSI_PROW_E2E_IMPORT_PATH "${csi_prow_kubernetes_version_suffix}")" "E2E package"
 
 # csi-sanity testing from the csi-test repo can be run against the installed
 # CSI driver. For this to work, deploying the driver must expose the Unix domain
@@ -200,42 +219,22 @@ regex_join () {
     echo "$@" | sed -e 's/  */|/g' -e 's/^|*//' -e 's/|*$//' -e 's/^$/this-matches-nothing/g'
 }
 
-# Prints the value of a variable + version suffix, falling back to variable + "LATEST".
-get_versioned_variable () {
-    local var="$1"
-    local version="$2"
-    local value
-
-    eval value="\${${var}_${version}}"
-    if ! [ "$value" ]; then
-        eval value="\${${var}_LATEST}"
-    fi
-    echo "$value"
-}
-
-# Which tests are alpha depends on the Kubernetes version. The same
-# E2E test suite is used for all Kubernetes versions, including older
-# Kubernetes.
+# Which tests are alpha depends on the Kubernetes version. We could
+# use the same E2E test for all Kubernetes version. This would have
+# the advantage that new tests can be applied to older versions
+# without having to backport tests.
 #
-# Feature tags in the test are set based on what is an alpha
-# feature in the Kubernetes version that contains the E2E test suite's
-# source code.
+# But the feature tag gets removed from E2E tests when the corresponding
+# feature becomes beta, so we would have to track which tests were
+# alpha in previous Kubernetes releases. This was considered too
+# error prone. Therefore we use E2E tests that match the Kubernetes
+# version that is getting tested.
 #
-# So when testing against an older Kubernetes release, some tests
-# might be enabled by default which don't pass for that older
-# Kubernetes version. In that case, the
-# CSI_PROW_E2E_ALPHA_<k8s-version> variable cannot just
-# be based on the `Feature` tag, it also must contain the names
-# of tests that used to be alpha but no longer have that tag.
-#
-# <k8s-version> is just major+minor version separated by
-# underscore. "latest" matches master. It is also used for
-# unknown versions, so when master gets released there is
-# no need to add a new versioned variable. That only needs to be
-# done when updating something in the configuration that leads
-# to "latest" no longer being suitable.
+# However, for 1.13.x testing we have to use the E2E tests from 1.14
+# because 1.13 didn't have --storage.testdriver yet, so for that (and only
+# that version) we have to define alpha tests differently.
 configvar CSI_PROW_E2E_ALPHA_1_13 '\[Feature: \[Testpattern:.Dynamic.PV..block.volmode.\] should.create.and.delete.block.persistent.volumes' "alpha tests for Kubernetes 1.13" # Raw block was an alpha feature in 1.13.
-configvar CSI_PROW_E2E_ALPHA_LATEST '\[Feature:' "alpha tests for Kubernetes master"
+configvar CSI_PROW_E2E_ALPHA_LATEST '\[Feature:' "alpha tests for Kubernetes >= 1.14" # there's no need to update this, adding a new case for CSI_PROW_E2E for a new Kubernetes is enough
 configvar CSI_PROW_E2E_ALPHA "$(get_versioned_variable CSI_PROW_E2E_ALPHA "${csi_prow_kubernetes_version_suffix}")" "alpha tests"
 
 # After the parallel E2E test without alpha features, a test cluster
@@ -251,6 +250,7 @@ configvar CSI_PROW_E2E_ALPHA "$(get_versioned_variable CSI_PROW_E2E_ALPHA "${csi
 # the failing test for "latest" or by updating the test and not running
 # it anymore for older releases.
 configvar CSI_PROW_E2E_ALPHA_GATES_1_13 'VolumeSnapshotDataSource=true,BlockVolume=true,CSIBlockVolume=true' "alpha feature gates for Kubernetes 1.13"
+# TODO: add new CSI_PROW_ALPHA_GATES entry for future Kubernetes releases
 configvar CSI_PROW_E2E_ALPHA_GATES_LATEST 'VolumeSnapshotDataSource=true' "alpha feature gates for latest Kubernetes"
 configvar CSI_PROW_E2E_ALPHA_GATES "$(get_versioned_variable CSI_PROW_E2E_ALPHA_GATES "${csi_prow_kubernetes_version_suffix}")" "alpha E2E feature gates"
 
