@@ -60,8 +60,7 @@ go_from_travis_yml () {
     grep "^ *- go:" "${RELEASE_TOOLS_ROOT}/travis.yml" | sed -e 's/.*go: *//'
 }
 configvar CSI_PROW_GO_VERSION_BUILD "$(go_from_travis_yml)" "Go version for building the component" # depends on component's source code
-configvar CSI_PROW_GO_VERSION_K8S 1.12.1 "Go version for building Kubernetes for the test cluster" # depends on Kubernetes version
-configvar CSI_PROW_GO_VERSION_E2E 1.12.1 "Go version for building the Kubernetes E2E test suite" # depends on CSI_PROW_E2E settings below
+configvar CSI_PROW_GO_VERSION_E2E "" "override Go version for building the Kubernetes E2E test suite" # normally doesn't need to be set, see install_e2e
 configvar CSI_PROW_GO_VERSION_SANITY "${CSI_PROW_GO_VERSION_BUILD}" "Go version for building the csi-sanity test suite" # depends on CSI_PROW_SANITY settings below
 configvar CSI_PROW_GO_VERSION_KIND "${CSI_PROW_GO_VERSION_BUILD}" "Go version for building 'kind'" # depends on CSI_PROW_KIND_VERSION below
 configvar CSI_PROW_GO_VERSION_GINKGO "${CSI_PROW_GO_VERSION_BUILD}" "Go version for building ginkgo" # depends on CSI_PROW_GINKGO_VERSION below
@@ -292,12 +291,14 @@ mkdir -p "${CSI_PROW_BIN}"
 PATH="${CSI_PROW_BIN}:$PATH"
 
 # Ensure that PATH has the desired version of the Go tools, then run command given as argument.
+# Empty parameter uses the already installed Go. In Prow, that version is kept up-to-date by
+# bumping the container image regularly.
 run_with_go () {
     local version
     version="$1"
     shift
 
-    if go version 2>/dev/null | grep -q "go$version"; then
+    if ! [ "$version" ] || go version 2>/dev/null | grep -q "go$version"; then
         run "$@"
     else
         if ! [ -d "${CSI_PROW_WORK}/go-$version" ];  then
@@ -374,6 +375,20 @@ list_gates () (
     done
 )
 
+go_version_for_kubernetes () (
+    local path="$1"
+    local version="$2"
+    local go_version
+
+    # We use the minimal Go version specified for each K8S release (= minimum_go_version in hack/lib/golang.sh).
+    # More recent versions might also work, but we don't want to count on that.
+    go_version="$(grep minimum_go_version= "$path/hack/lib/golang.sh" | sed -e 's/.*=go//')"
+    if ! [ "$go_version" ]; then
+        die "Unable to determine Go version for Kubernetes $version from hack/lib/golang.sh."
+    fi
+    echo "$go_version"
+)
+
 csi_prow_kind_have_kubernetes=false
 # Brings up a Kubernetes cluster and sets KUBECONFIG.
 # Accepts additional feature gates in the form gate1=true|false,gate2=...
@@ -399,7 +414,8 @@ start_cluster () {
             # while v1.14.0-fake.1 did.
             (cd "$GOPATH/src/k8s.io/kubernetes" && run git tag -f v1.14.0-fake.1) || die "git tag failed"
 
-            run_with_go "${CSI_PROW_GO_VERSION_K8S}" kind build node-image --type bazel --image csiprow/node:latest --kube-root "$GOPATH/src/k8s.io/kubernetes" || die "'kind build node-image' failed"
+            go_version="$(go_version_for_kubernetes "$GOPATH/src/k8s.io/kubernetes" "$version")" || die "cannot proceed without knowing Go version for Kubernetes"
+            run_with_go "$go_version" kind build node-image --type bazel --image csiprow/node:latest --kube-root "$GOPATH/src/k8s.io/kubernetes" || die "'kind build node-image' failed"
             csi_prow_kind_have_kubernetes=true
         fi
         image="csiprow/node:latest"
@@ -563,7 +579,8 @@ install_e2e () {
 
     git_checkout "${CSI_PROW_E2E_REPO}" "${GOPATH}/src/${CSI_PROW_E2E_IMPORT_PATH}" "${CSI_PROW_E2E_VERSION}" --depth=1 &&
     if [ "${CSI_PROW_E2E_IMPORT_PATH}" = "k8s.io/kubernetes" ]; then
-        run_with_go "${CSI_PROW_GO_VERSION_E2E}" make WHAT=test/e2e/e2e.test "-C${GOPATH}/src/${CSI_PROW_E2E_IMPORT_PATH}" &&
+        go_version="${CSI_PROW_GO_VERSION_E2E:-$(go_version_for_kubernetes "${GOPATH}/src/${CSI_PROW_E2E_IMPORT_PATH}" "${CSI_PROW_E2E_VERSION}")}" &&
+        run_with_go "$go_version" make WHAT=test/e2e/e2e.test "-C${GOPATH}/src/${CSI_PROW_E2E_IMPORT_PATH}" &&
         ln -s "${GOPATH}/src/${CSI_PROW_E2E_IMPORT_PATH}/_output/bin/e2e.test" "${CSI_PROW_WORK}"
     else
         run_with_go "${CSI_PROW_GO_VERSION_E2E}" go test -c -o "${CSI_PROW_WORK}/e2e.test" "${CSI_PROW_E2E_IMPORT_PATH}/test/e2e"
