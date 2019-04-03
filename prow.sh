@@ -151,12 +151,8 @@ configvar CSI_PROW_WORK "$(mkdir -p "$GOPATH/pkg" && mktemp -d "$GOPATH/pkg/csip
 #
 # When no deploy script is found (nothing in `deploy` directory,
 # CSI_PROW_HOSTPATH_REPO=none), nothing gets deployed.
-#
-# TODO: merge https://github.com/kubernetes-csi/csi-driver-host-path/pull/29, switch to revision from master
-configvar CSI_PROW_HOSTPATH_VERSION deployment "hostpath driver"
-configvar CSI_PROW_HOSTPATH_REPO https://github.com/pohly/csi-driver-host-path "hostpath repo"
-# Ignore 'See if you can use ${variable//search/replace} instead.'
-# shellcheck disable=SC2001
+configvar CSI_PROW_HOSTPATH_VERSION 486074dc3beef59955faf7bb5210418d9844e0a7 "hostpath driver" # pre-1.1.0
+configvar CSI_PROW_HOSTPATH_REPO https://github.com/kubernetes-csi/csi-driver-host-path "hostpath repo"
 configvar CSI_PROW_DEPLOYMENT "" "deployment"
 
 # If CSI_PROW_HOSTPATH_CANARY is set (typically to "canary", but also
