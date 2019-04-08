@@ -141,6 +141,10 @@ test: test-shellcheck
 test-shellcheck:
 	@ echo; echo "### $@:"
 	@ ret=0; \
+	if ! command -v docker; then \
+		echo "skipped, no Docker"; \
+		return 0; \
+        fi; \
 	for dir in $(abspath $(TEST_SHELLCHECK_DIRS)); do \
 		echo; \
 		echo "$$dir:"; \
