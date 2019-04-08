@@ -203,7 +203,16 @@ configvar CSI_PROW_SANITY_CONTAINER "hostpath" "Kubernetes container with CSI dr
 # by setting CSI_PROW_TESTS_SANITY.
 configvar CSI_PROW_TESTS "unit parallel serial parallel-alpha serial-alpha ${CSI_PROW_TESTS_SANITY}" "tests to run"
 test_enabled () {
-    echo "${CSI_PROW_TESTS}" | grep -q -w -e "$1"
+    local test="$1"
+    # We want word-splitting here, so ignore: Double quote to prevent globbing and word splitting.
+    # shellcheck disable=SC2086
+    set ${CSI_PROW_TESTS}
+    for t in "$@"; do
+        if [ "$t" = "$test" ]; then
+            return
+        fi
+    done
+    return 1
 }
 
 # Serial vs. parallel is always determined by these regular expressions.
