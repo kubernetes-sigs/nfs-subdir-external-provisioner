@@ -619,18 +619,18 @@ install_sanity () (
 
 # Whether the hostpath driver supports raw block devices depends on which version
 # we are testing. It would be much nicer if we could determine that by querying the
-# installed driver.
+# installed driver's capabilities instead of having to do a version check.
 hostpath_supports_block () {
-    if [ -e "cmd/hostpathplugin" ] && ${CSI_PROW_BUILD_JOB}; then
-        # The assumption is that if we build the hostpath driver, then it is
-        # a current version with support.
-        echo true
-        return
-    fi
-
-    case "${CSI_PROW_DEPLOYMENT}" in kubernetes-1.13) echo false;; # wasn't supported and probably won't be backported
-                                      *) echo true;; # probably all other deployments have a recent driver
-    esac
+    local result
+    result="$(docker exec csi-prow-control-plane docker image ls --format='{{.Repository}} {{.Tag}} {{.ID}}' | grep hostpath | while read -r repo tag id; do
+        if [ "$tag" == "v1.0.1" ]; then
+            # Old version because the revision label is missing: didn't have support yet.
+            echo "false"
+            return
+        fi
+    done)"
+    # If not set, then it must be a newer driver with support.
+    echo "${result:-true}"
 }
 
 # Captures pod output while running some other command.
