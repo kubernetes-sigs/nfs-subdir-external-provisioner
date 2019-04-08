@@ -488,7 +488,17 @@ $(list_gates "$gates")
     featureGates:
 $(list_gates "$gates")
 EOF
-    run kind create cluster --name csi-prow --config "${CSI_PROW_WORK}/kind-config.yaml" --wait 5m --image "$image" || die "'kind create cluster' failed"
+    info "kind-config.yaml:"
+    cat "${CSI_PROW_WORK}/kind-config.yaml"
+    if ! run kind create cluster --name csi-prow --config "${CSI_PROW_WORK}/kind-config.yaml" --wait 5m --image "$image"; then
+        warn "Cluster creation failed. Will try again with higher verbosity."
+        info "Available Docker images:"
+        docker image ls
+        if ! run kind --loglevel debug create cluster --retain --name csi-prow --config "${CSI_PROW_WORK}/kind-config.yaml" --wait 5m --image "$image"; then
+            run kind export logs --name csi-prow "$ARTIFACTS/kind-cluster"
+            die "Cluster creation failed again, giving up. See the 'kind-cluster' artifact directory for additional logs."
+        fi
+    fi
     KUBECONFIG="$(kind get kubeconfig-path --name=csi-prow)"
     export KUBECONFIG
 }
