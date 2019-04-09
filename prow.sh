@@ -202,9 +202,30 @@ configvar CSI_PROW_SANITY_CONTAINER "hostpath" "Kubernetes container with CSI dr
 # is off by default. A CSI driver can change that default in its .prow.sh
 # by setting CSI_PROW_TESTS_SANITY.
 configvar CSI_PROW_TESTS "unit parallel serial parallel-alpha serial-alpha ${CSI_PROW_TESTS_SANITY}" "tests to run"
-test_enabled () {
-    echo "${CSI_PROW_TESTS}" | grep -q -w -e "$1"
+tests_enabled () {
+    local t1 t2
+    # We want word-splitting here, so ignore: Quote to prevent word splitting, or split robustly with mapfile or read -a.
+    # shellcheck disable=SC2206
+    local tests=(${CSI_PROW_TESTS})
+    for t1 in "$@"; do
+        for t2 in "${tests[@]}"; do
+            if [ "$t1" = "$t2" ]; then
+                return
+            fi
+        done
+    done
+    return 1
 }
+tests_need_kind () {
+    tests_enabled "sanity" "parallel" "serial" "serial-alpha" "parallel-alpha"
+}
+tests_need_non_alpha_cluster () {
+    tests_enabled "sanity" "parallel" "serial"
+}
+tests_need_alpha_cluster () {
+    tests_enabled "parallel-alpha" "serial-alpha"
+}
+
 
 # Serial vs. parallel is always determined by these regular expressions.
 # Individual regular expressions are seperated by spaces for readability
@@ -246,8 +267,9 @@ configvar CSI_PROW_E2E_ALPHA "$(get_versioned_variable CSI_PROW_E2E_ALPHA "${csi
 # the failing test for "latest" or by updating the test and not running
 # it anymore for older releases.
 configvar CSI_PROW_E2E_ALPHA_GATES_1_13 'VolumeSnapshotDataSource=true,BlockVolume=true,CSIBlockVolume=true' "alpha feature gates for Kubernetes 1.13"
+configvar CSI_PROW_E2E_ALPHA_GATES_1_14 'VolumeSnapshotDataSource=true,ExpandCSIVolumes=true' "alpha feature gates for Kubernetes 1.14"
 # TODO: add new CSI_PROW_ALPHA_GATES entry for future Kubernetes releases
-configvar CSI_PROW_E2E_ALPHA_GATES_LATEST 'VolumeSnapshotDataSource=true' "alpha feature gates for latest Kubernetes"
+configvar CSI_PROW_E2E_ALPHA_GATES_LATEST 'AllAlpha=true,ExpandCSIVolumes=true' "alpha feature gates for latest Kubernetes"
 configvar CSI_PROW_E2E_ALPHA_GATES "$(get_versioned_variable CSI_PROW_E2E_ALPHA_GATES "${csi_prow_kubernetes_version_suffix}")" "alpha E2E feature gates"
 
 # Some tests are known to be unusable in a KinD cluster. For example,
@@ -466,7 +488,17 @@ $(list_gates "$gates")
     featureGates:
 $(list_gates "$gates")
 EOF
-    run kind create cluster --name csi-prow --config "${CSI_PROW_WORK}/kind-config.yaml" --wait 5m --image "$image" || die "'kind create cluster' failed"
+    info "kind-config.yaml:"
+    cat "${CSI_PROW_WORK}/kind-config.yaml"
+    if ! run kind create cluster --name csi-prow --config "${CSI_PROW_WORK}/kind-config.yaml" --wait 5m --image "$image"; then
+        warn "Cluster creation failed. Will try again with higher verbosity."
+        info "Available Docker images:"
+        docker image ls
+        if ! run kind --loglevel debug create cluster --retain --name csi-prow --config "${CSI_PROW_WORK}/kind-config.yaml" --wait 5m --image "$image"; then
+            run kind export logs --name csi-prow "$ARTIFACTS/kind-cluster"
+            die "Cluster creation failed again, giving up. See the 'kind-cluster' artifact directory for additional logs."
+        fi
+    fi
     KUBECONFIG="$(kind get kubeconfig-path --name=csi-prow)"
     export KUBECONFIG
 }
@@ -509,6 +541,15 @@ install_hostpath () {
 
     if [ "${CSI_PROW_DEPLOYMENT}" = "none" ]; then
         return 1
+    fi
+
+    if ${CSI_PROW_BUILD_JOB}; then
+        # Ignore: Double quote to prevent globbing and word splitting.
+        # Ignore: To read lines rather than words, pipe/redirect to a 'while read' loop.
+        # shellcheck disable=SC2086 disable=SC2013
+        for i in $(grep '^\s*CMDS\s*=' Makefile | sed -e 's/\s*CMDS\s*=//'); do
+            kind load docker-image --name csi-prow $i:csiprow || die "could not load the $i:latest image into the kind cluster"
+        done
     fi
 
     if deploy_hostpath="$(find_deployment "$(pwd)/deploy")"; then
@@ -609,18 +650,18 @@ install_sanity () (
 
 # Whether the hostpath driver supports raw block devices depends on which version
 # we are testing. It would be much nicer if we could determine that by querying the
-# installed driver.
+# installed driver's capabilities instead of having to do a version check.
 hostpath_supports_block () {
-    if [ -e "cmd/hostpathplugin" ] && ${CSI_PROW_BUILD_JOB}; then
-        # The assumption is that if we build the hostpath driver, then it is
-        # a current version with support.
-        echo true
-        return
-    fi
-
-    case "${CSI_PROW_DEPLOYMENT}" in kubernetes-1.13) echo false;; # wasn't supported and probably won't be backported
-                                      *) echo true;; # probably all other deployments have a recent driver
-    esac
+    local result
+    result="$(docker exec csi-prow-control-plane docker image ls --format='{{.Repository}} {{.Tag}} {{.ID}}' | grep hostpath | while read -r repo tag id; do
+        if [ "$tag" == "v1.0.1" ]; then
+            # Old version because the revision label is missing: didn't have support yet.
+            echo "false"
+            return
+        fi
+    done)"
+    # If not set, then it must be a newer driver with support.
+    echo "${result:-true}"
 }
 
 # Captures pod output while running some other command.
@@ -826,7 +867,7 @@ main () {
         # might have been minor or unavoidable, for example when experimenting with
         # changes in "release-tools" in a PR (that fails the "is release-tools unmodified"
         # test).
-        if test_enabled "unit"; then
+        if tests_enabled "unit"; then
             if ! run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make -k test 2>&1 | make_test_to_junit; then
                 warn "'make test' failed, proceeding anyway"
                 ret=1
@@ -836,102 +877,99 @@ main () {
         run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make container || die "'make container' failed"
     fi
 
-    install_kind || die "installing kind failed"
-    start_cluster || die "starting the cluster failed"
+    if tests_need_kind; then
+        install_kind || die "installing kind failed"
 
-    if ${CSI_PROW_BUILD_JOB}; then
-        cmds="$(grep '^\s*CMDS\s*=' Makefile | sed -e 's/\s*CMDS\s*=//')"
-        # Get the image that was just built (if any) from the
-        # top-level Makefile CMDS variable and set the
-        # deploy-hostpath.sh env variables for it. We also need to
-        # side-load those images into the cluster.
-        for i in $cmds; do
-            e=$(echo "$i" | tr '[:lower:]' '[:upper:]' | tr - _)
-            images="$images ${e}_REGISTRY=none ${e}_TAG=csiprow"
-
-            # We must avoid the tag "latest" because that implies
-            # always pulling the image
-            # (https://github.com/kubernetes-sigs/kind/issues/328).
-            docker tag "$i:latest" "$i:csiprow" || die "tagging the locally built container image for $i failed"
-            kind load docker-image --name csi-prow "$i:csiprow" || die "could not load the $i:latest image into the kind cluster"
-        done
-
-        if [ -e deploy/kubernetes/rbac.yaml ]; then
-            # This is one of those components which has its own RBAC rules (like external-provisioner).
-            # We are testing a locally built image and also want to test with the the current,
-            # potentially modified RBAC rules.
-            if [ "$(echo "$cmds" | wc -w)" != 1 ]; then
-                die "ambiguous deploy/kubernetes/rbac.yaml: need exactly one command, got: $cmds"
-            fi
-            e=$(echo "$cmds" | tr '[:lower:]' '[:upper:]' | tr - _)
-            images="$images ${e}_RBAC=$(pwd)/deploy/kubernetes/rbac.yaml"
-        fi
-    fi
-
-    # Installing the driver might be disabled, in which case we bail out early.
-    if ! install_hostpath "$images"; then
-        info "hostpath driver installation disabled, skipping E2E testing"
-        return "$ret"
-    fi
-
-    collect_cluster_info
-
-    if test_enabled "sanity"; then
-        if ! run_sanity; then
-            ret=1
-        fi
-    fi
-
-    if test_enabled "parallel"; then
-        # Ignore: Double quote to prevent globbing and word splitting.
-        # shellcheck disable=SC2086
-        if ! run_e2e parallel ${CSI_PROW_GINKO_PARALLEL} \
-             -focus="External.Storage" \
-             -skip="$(regex_join "${CSI_PROW_E2E_SERIAL}" "${CSI_PROW_E2E_ALPHA}" "${CSI_PROW_E2E_SKIP}")"; then
-            warn "E2E parallel failed"
-            ret=1
-        fi
-    fi
-
-    if test_enabled "serial"; then
-        if ! run_e2e serial \
-             -focus="External.Storage.*($(regex_join "${CSI_PROW_E2E_SERIAL}"))" \
-             -skip="$(regex_join "${CSI_PROW_E2E_ALPHA}" "${CSI_PROW_E2E_SKIP}")"; then
-            warn "E2E serial failed"
-            ret=1
-        fi
-    fi
-
-    if (test_enabled "parallel-alpha" || test_enabled "serial-alpha") && [ "${CSI_PROW_E2E_ALPHA_GATES}" ]; then
-        # Need to (re)create the cluster.
-        start_cluster "${CSI_PROW_E2E_ALPHA_GATES}" || die "starting alpha cluster failed"
         if ${CSI_PROW_BUILD_JOB}; then
-            # Ignore: Double quote to prevent globbing and word splitting.
-            # Ignore: To read lines rather than words, pipe/redirect to a 'while read' loop.
-            # shellcheck disable=SC2086 disable=SC2013
-            for i in $(grep '^\s*CMDS\s*=' Makefile | sed -e 's/\s*CMDS\s*=//'); do
-                kind load docker-image --name csi-prow $i:csiprow || die "could not load the $i:latest image into the kind cluster"
-            done
-        fi
-        install_hostpath "$images" || die "hostpath driver installation failed unexpectedly on alpha cluster"
+            cmds="$(grep '^\s*CMDS\s*=' Makefile | sed -e 's/\s*CMDS\s*=//')"
+            # Get the image that was just built (if any) from the
+            # top-level Makefile CMDS variable and set the
+            # deploy-hostpath.sh env variables for it. We also need to
+            # side-load those images into the cluster.
+            for i in $cmds; do
+                e=$(echo "$i" | tr '[:lower:]' '[:upper:]' | tr - _)
+                images="$images ${e}_REGISTRY=none ${e}_TAG=csiprow"
 
-        if test_enabled "parallel-alpha"; then
-            # Ignore: Double quote to prevent globbing and word splitting.
-            # shellcheck disable=SC2086
-            if ! run_e2e parallel-alpha ${CSI_PROW_GINKO_PARALLEL} \
-                 -focus="External.Storage.*($(regex_join "${CSI_PROW_E2E_ALPHA}"))" \
-                 -skip="$(regex_join "${CSI_PROW_E2E_SERIAL}" "${CSI_PROW_E2E_SKIP}")"; then
-                warn "E2E parallel alpha failed"
-                ret=1
+                # We must avoid the tag "latest" because that implies
+                # always pulling the image
+                # (https://github.com/kubernetes-sigs/kind/issues/328).
+                docker tag "$i:latest" "$i:csiprow" || die "tagging the locally built container image for $i failed"
+            done
+
+            if [ -e deploy/kubernetes/rbac.yaml ]; then
+                # This is one of those components which has its own RBAC rules (like external-provisioner).
+                # We are testing a locally built image and also want to test with the the current,
+                # potentially modified RBAC rules.
+                if [ "$(echo "$cmds" | wc -w)" != 1 ]; then
+                    die "ambiguous deploy/kubernetes/rbac.yaml: need exactly one command, got: $cmds"
+                fi
+                e=$(echo "$cmds" | tr '[:lower:]' '[:upper:]' | tr - _)
+                images="$images ${e}_RBAC=$(pwd)/deploy/kubernetes/rbac.yaml"
             fi
         fi
 
-        if test_enabled "serial-alpha"; then
-            if ! run_e2e serial-alpha \
-                 -focus="External.Storage.*(($(regex_join "${CSI_PROW_E2E_SERIAL}")).*($(regex_join "${CSI_PROW_E2E_ALPHA}"))|($(regex_join "${CSI_PROW_E2E_ALPHA}")).*($(regex_join "${CSI_PROW_E2E_SERIAL}")))" \
-                 -skip="$(regex_join "${CSI_PROW_E2E_SKIP}")"; then
-                warn "E2E serial alpha failed"
-                ret=1
+        if tests_need_non_alpha_cluster; then
+            start_cluster || die "starting the non-alpha cluster failed"
+
+            # Installing the driver might be disabled.
+            if install_hostpath "$images"; then
+                collect_cluster_info
+
+                if tests_enabled "sanity"; then
+                    if ! run_sanity; then
+                        ret=1
+                    fi
+                fi
+
+                if tests_enabled "parallel"; then
+                    # Ignore: Double quote to prevent globbing and word splitting.
+                    # shellcheck disable=SC2086
+                    if ! run_e2e parallel ${CSI_PROW_GINKO_PARALLEL} \
+                         -focus="External.Storage" \
+                         -skip="$(regex_join "${CSI_PROW_E2E_SERIAL}" "${CSI_PROW_E2E_ALPHA}" "${CSI_PROW_E2E_SKIP}")"; then
+                        warn "E2E parallel failed"
+                        ret=1
+                    fi
+                fi
+
+                if tests_enabled "serial"; then
+                    if ! run_e2e serial \
+                         -focus="External.Storage.*($(regex_join "${CSI_PROW_E2E_SERIAL}"))" \
+                         -skip="$(regex_join "${CSI_PROW_E2E_ALPHA}" "${CSI_PROW_E2E_SKIP}")"; then
+                        warn "E2E serial failed"
+                        ret=1
+                    fi
+                fi
+            fi
+        fi
+
+        if tests_need_alpha_cluster && [ "${CSI_PROW_E2E_ALPHA_GATES}" ]; then
+            # Need to (re)create the cluster.
+            start_cluster "${CSI_PROW_E2E_ALPHA_GATES}" || die "starting alpha cluster failed"
+
+            # Installing the driver might be disabled.
+            if install_hostpath "$images"; then
+                collect_cluster_info
+
+                if tests_enabled "parallel-alpha"; then
+                    # Ignore: Double quote to prevent globbing and word splitting.
+                    # shellcheck disable=SC2086
+                    if ! run_e2e parallel-alpha ${CSI_PROW_GINKO_PARALLEL} \
+                         -focus="External.Storage.*($(regex_join "${CSI_PROW_E2E_ALPHA}"))" \
+                         -skip="$(regex_join "${CSI_PROW_E2E_SERIAL}" "${CSI_PROW_E2E_SKIP}")"; then
+                        warn "E2E parallel alpha failed"
+                        ret=1
+                    fi
+                fi
+
+                if tests_enabled "serial-alpha"; then
+                    if ! run_e2e serial-alpha \
+                         -focus="External.Storage.*(($(regex_join "${CSI_PROW_E2E_SERIAL}")).*($(regex_join "${CSI_PROW_E2E_ALPHA}"))|($(regex_join "${CSI_PROW_E2E_ALPHA}")).*($(regex_join "${CSI_PROW_E2E_SERIAL}")))" \
+                         -skip="$(regex_join "${CSI_PROW_E2E_SKIP}")"; then
+                        warn "E2E serial alpha failed"
+                        ret=1
+                    fi
+                fi
             fi
         fi
     fi
