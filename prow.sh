@@ -198,10 +198,13 @@ configvar CSI_PROW_SANITY_CONTAINER "hostpath" "Kubernetes container with CSI dr
 # - serial, only alpha features
 # - sanity
 #
-# Sanity testing with csi-sanity only covers the CSI driver itself and thus
-# is off by default. A CSI driver can change that default in its .prow.sh
-# by setting CSI_PROW_TESTS_SANITY.
-configvar CSI_PROW_TESTS "unit parallel serial parallel-alpha serial-alpha ${CSI_PROW_TESTS_SANITY}" "tests to run"
+# Unknown or unsupported entries are ignored.
+#
+# Sanity testing with csi-sanity only covers the CSI driver itself and
+# thus only makes sense in repos which provide their own CSI
+# driver. Repos can enable sanity testing by setting
+# CSI_PROW_TESTS_SANITY=sanity.
+configvar CSI_PROW_TESTS "unit parallel serial parallel-alpha serial-alpha sanity" "tests to run"
 tests_enabled () {
     local t1 t2
     # We want word-splitting here, so ignore: Quote to prevent word splitting, or split robustly with mapfile or read -a.
@@ -216,11 +219,16 @@ tests_enabled () {
     done
     return 1
 }
+sanity_enabled () {
+    [ "${CSI_PROW_TESTS_SANITY}" = "sanity" ] && tests_enabled "sanity"
+}
 tests_need_kind () {
-    tests_enabled "sanity" "parallel" "serial" "serial-alpha" "parallel-alpha"
+    tests_enabled "parallel" "serial" "serial-alpha" "parallel-alpha" ||
+        sanity_enabled
 }
 tests_need_non_alpha_cluster () {
-    tests_enabled "sanity" "parallel" "serial"
+    tests_enabled "parallel" "serial" ||
+        sanity_enabled
 }
 tests_need_alpha_cluster () {
     tests_enabled "parallel-alpha" "serial-alpha"
@@ -916,7 +924,7 @@ main () {
             if install_hostpath "$images"; then
                 collect_cluster_info
 
-                if tests_enabled "sanity"; then
+                if sanity_enabled; then
                     if ! run_sanity; then
                         ret=1
                     fi
