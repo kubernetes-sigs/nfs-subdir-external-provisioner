@@ -118,14 +118,39 @@ test-fmt:
 	fi
 
 # This test only runs when dep >= 0.5 is installed, which is the case for the CI setup.
+# When using 'go mod', we allow the test to be skipped in the Prow CI under some special
+# circumstances, because it depends on accessing all remote repos and thus
+# running it all the time would defeat the purpose of vendoring:
+# - not handling a PR or
+# - the fabricated merge commit leaves go.mod, go.sum and vendor dir unchanged
+# - release-tools also didn't change (changing rules or Go version might lead to
+#   a different result and thus must be tested)
 .PHONY: test-vendor
 test: test-vendor
 test-vendor:
 	@ echo; echo "### $@:"
-	@ case "$$(dep version 2>/dev/null | grep 'version *:')" in \
-		*v0.[56789]*) dep check && echo "vendor up-to-date" || false;; \
-		*) echo "skipping check, dep >= 0.5 required";; \
-	esac
+	@ if [ -f Gopkg.toml ]; then \
+		echo "Repo uses 'dep' for vendoring."; \
+		case "$$(dep version 2>/dev/null | grep 'version *:')" in \
+			*v0.[56789]*) dep check && echo "vendor up-to-date" || false;; \
+			*) echo "skipping check, dep >= 0.5 required";; \
+		esac; \
+	  else \
+		echo "Repo uses 'go mod' for vendoring."; \
+		if [ "$${JOB_NAME}" ] && \
+                   ( [ "$${JOB_TYPE}" != "presubmit" ] || \
+                     [ $$(git diff "${PULL_BASE_SHA}..HEAD" -- go.mod go.sum vendor release-tools | wc -l) -eq 0 ] ); then \
+			echo "Skipping vendor check because the Prow pre-submit job does not change vendoring."; \
+		elif ! GO111MODULE=on go mod vendor; then \
+			echo "ERROR: vendor check failed."; \
+			false; \
+		elif [ $$(git status --porcelain -- vendor | wc -l) -gt 0 ]; then \
+			echo "ERROR: vendor directory *not* up-to-date, it did get modified by 'GO111MODULE=on go mod vendor':"; \
+			git status -- vendor; \
+			git diff -- vendor; \
+			false; \
+		fi; \
+	 fi;
 
 .PHONY: test-subtree
 test: test-subtree
