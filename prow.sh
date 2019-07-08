@@ -154,6 +154,7 @@ configvar CSI_PROW_WORK "$(mkdir -p "$GOPATH/pkg" && mktemp -d "$GOPATH/pkg/csip
 configvar CSI_PROW_HOSTPATH_VERSION fc52d13ba07922c80555a24616a5b16480350c3f "hostpath driver" # pre-1.1.0
 configvar CSI_PROW_HOSTPATH_REPO https://github.com/kubernetes-csi/csi-driver-host-path "hostpath repo"
 configvar CSI_PROW_DEPLOYMENT "" "deployment"
+configvar CSI_PROW_HOSTPATH_DRIVER_NAME "csi-hostpath" "the driver (aka provisioner) name of the chosen hostpath driver"
 
 # If CSI_PROW_HOSTPATH_CANARY is set (typically to "canary", but also
 # "1.0-canary"), then all image versions are replaced with that
@@ -673,6 +674,29 @@ hostpath_supports_block () {
     echo "${result:-true}"
 }
 
+# The default implementation of this function generates a external
+# driver test configuration for the hostpath driver.
+#
+# The content depends on both what the E2E suite expects and what the
+# installed hostpath driver supports. Generating it here seems prone
+# to breakage, but it is uncertain where a better place might be.
+generate_test_driver () {
+    cat <<EOF
+ShortName: csiprow
+StorageClass:
+  FromName: true
+SnapshotClass:
+  FromName: true
+DriverInfo:
+  Name: ${CSI_PROW_HOSTPATH_DRIVER_NAME}
+  Capabilities:
+    block: $(hostpath_supports_block)
+    persistence: true
+    dataSource: true
+    multipods: true
+EOF
+}
+
 # Captures pod output while running some other command.
 run_with_loggers () (
     loggers=$(start_loggers -f)
@@ -698,23 +722,7 @@ run_e2e () (
     # When running on a multi-node cluster, we need to figure out where the
     # hostpath driver was deployed and set ClientNodeName accordingly.
 
-    # The content of this file depends on both what the E2E suite expects and
-    # what the installed hostpath driver supports. Generating it here seems
-    # prone to breakage, but it is uncertain where a better place might be.
-    cat >"${CSI_PROW_WORK}/hostpath-test-driver.yaml" <<EOF
-ShortName: csiprow
-StorageClass:
-  FromName: true
-SnapshotClass:
-  FromName: true
-DriverInfo:
-  Name: csi-hostpath
-  Capabilities:
-    block: $(hostpath_supports_block)
-    persistence: true
-    dataSource: true
-    multipods: true
-EOF
+    generate_test_driver >"${CSI_PROW_WORK}/test-driver.yaml" || die "generating test-driver.yaml failed"
 
     # Rename, merge and filter JUnit files. Necessary in case that we run the E2E suite again
     # and to avoid the large number of "skipped" tests that we get from using
@@ -727,7 +735,7 @@ EOF
     trap move_junit EXIT
 
     cd "${GOPATH}/src/${CSI_PROW_E2E_IMPORT_PATH}" &&
-    run_with_loggers ginkgo -v "$@" "${CSI_PROW_WORK}/e2e.test" -- -report-dir "${ARTIFACTS}" -storage.testdriver="${CSI_PROW_WORK}/hostpath-test-driver.yaml"
+    run_with_loggers ginkgo -v "$@" "${CSI_PROW_WORK}/e2e.test" -- -report-dir "${ARTIFACTS}" -storage.testdriver="${CSI_PROW_WORK}/test-driver.yaml"
 )
 
 # Run csi-sanity against installed CSI driver.
