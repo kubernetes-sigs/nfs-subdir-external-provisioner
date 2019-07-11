@@ -183,7 +183,7 @@ configvar CSI_PROW_WORK "$(mkdir -p "$GOPATH/pkg" && mktemp -d "$GOPATH/pkg/csip
 #
 # When no deploy script is found (nothing in `deploy` directory,
 # CSI_PROW_HOSTPATH_REPO=none), nothing gets deployed.
-configvar CSI_PROW_HOSTPATH_VERSION fc52d13ba07922c80555a24616a5b16480350c3f "hostpath driver" # pre-1.1.0
+configvar CSI_PROW_HOSTPATH_VERSION "v1.2.0-rc2" "hostpath driver"
 configvar CSI_PROW_HOSTPATH_REPO https://github.com/kubernetes-csi/csi-driver-host-path "hostpath repo"
 configvar CSI_PROW_DEPLOYMENT "" "deployment"
 configvar CSI_PROW_HOSTPATH_DRIVER_NAME "csi-hostpath" "the driver (aka provisioner) name of the chosen hostpath driver"
