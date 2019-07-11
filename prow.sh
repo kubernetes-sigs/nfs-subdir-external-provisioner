@@ -52,6 +52,26 @@ configvar () {
     eval echo "\$3:" "$1=\${$1}"
 }
 
+# Takes the minor version of $CSI_PROW_KUBERNETES_VERSION and overrides it to
+# $1 if they are equal minor versions. Ignores versions that begin with
+# "release-".
+override_k8s_version () {
+    local current_minor_version
+    local override_minor_version
+
+    # Ignore: See if you can use ${variable//search/replace} instead.
+    # shellcheck disable=SC2001
+    current_minor_version="$(echo "${CSI_PROW_KUBERNETES_VERSION}" | sed -e 's/\([0-9]*\)\.\([0-9]*\).*/\1\.\2/')"
+
+    # Ignore: See if you can use ${variable//search/replace} instead.
+    # shellcheck disable=SC2001
+    override_minor_version="$(echo "${1}" | sed -e 's/\([0-9]*\)\.\([0-9]*\).*/\1\.\2/')"
+    if [ "${current_minor_version}" == "${override_minor_version}" ]; then
+      CSI_PROW_KUBERNETES_VERSION="$1"
+      echo "Overriding CSI_PROW_KUBERNETES_VERSION with $1: $CSI_PROW_KUBERNETES_VERSION"
+    fi
+}
+
 # Prints the value of a variable + version suffix, falling back to variable + "LATEST".
 get_versioned_variable () {
     local var="$1"
@@ -81,7 +101,7 @@ configvar CSI_PROW_GO_VERSION_GINKGO "${CSI_PROW_GO_VERSION_BUILD}" "Go version 
 # kind version to use. If the pre-installed version is different,
 # the desired version is downloaded from https://github.com/kubernetes-sigs/kind/releases/download/
 # (if available), otherwise it is built from source.
-configvar CSI_PROW_KIND_VERSION 0.2.1 "kind"
+configvar CSI_PROW_KIND_VERSION v0.4.0 "kind"
 
 # ginkgo test runner version to use. If the pre-installed version is
 # different, the desired version is built from source.
@@ -107,6 +127,18 @@ configvar CSI_PROW_BUILD_JOB true "building code in repo enabled"
 # as long as there are no breaking changes in Kubernetes, like
 # deprecating or changing the implementation of an alpha feature.
 configvar CSI_PROW_KUBERNETES_VERSION 1.13.3 "Kubernetes"
+
+# This is a hack to workaround the issue that each version
+# of kind currently only supports specific patch versions of
+# Kubernetes. We need to override CSI_PROW_KUBERNETES_VERSION
+# passed in by our CI/pull jobs to the versions that
+# kind v0.4.0 supports.
+#
+# If the version is prefixed with "release-", then nothing
+# is overridden.
+override_k8s_version "1.13.7"
+override_k8s_version "1.14.3"
+override_k8s_version "1.15.0"
 
 # CSI_PROW_KUBERNETES_VERSION reduced to first two version numbers and
 # with underscore (1_13 instead of 1.13.3) and in uppercase (LATEST
@@ -466,40 +498,51 @@ start_cluster () {
         image="kindest/node:v${CSI_PROW_KUBERNETES_VERSION}"
     fi
     cat >"${CSI_PROW_WORK}/kind-config.yaml" <<EOF
-kind: Config
-apiVersion: kind.sigs.k8s.io/v1alpha2
+kind: Cluster
+apiVersion: kind.sigs.k8s.io/v1alpha3
 nodes:
 - role: control-plane
-  kubeadmConfigPatches:
-  - |
-    apiVersion: kubeadm.k8s.io/v1beta1
-    kind: ClusterConfiguration
-    metadata:
-      name: config
-    apiServer:
-      extraArgs:
-        "feature-gates": "$gates"
-    controllerManager:
-      extraArgs:
-        "feature-gates": "$gates"
-    scheduler:
-      extraArgs:
-        "feature-gates": "$gates"
-  - |
-    apiVersion: kubelet.config.k8s.io/v1beta1
-    kind: KubeletConfiguration
-    metadata:
-      name: config
-    featureGates:
-$(list_gates "$gates")
-  - |
-    apiVersion: kubeproxy.config.k8s.io/v1alpha1
-    kind: KubeProxyConfiguration
-    metadata:
-      name: config
-    featureGates:
+EOF
+
+    # kubeadm has API dependencies between apiVersion and Kubernetes version
+    # 1.15+ requires kubeadm.k8s.io/v1beta2
+    # We only run alpha tests against master so we don't need to maintain
+    # different patches for different Kubernetes releases.
+    if [[ -n "$gates" ]]; then
+        cat >>"${CSI_PROW_WORK}/kind-config.yaml" <<EOF
+kubeadmConfigPatches:
+- |
+  apiVersion: kubeadm.k8s.io/v1beta2
+  kind: ClusterConfiguration
+  metadata:
+    name: config
+  apiServer:
+    extraArgs:
+      "feature-gates": "$gates"
+  controllerManager:
+    extraArgs:
+      "feature-gates": "$gates"
+  scheduler:
+    extraArgs:
+      "feature-gates": "$gates"
+- |
+  apiVersion: kubeadm.k8s.io/v1beta2
+  kind: InitConfiguration
+  metadata:
+    name: config
+  nodeRegistration:
+    kubeletExtraArgs:
+      "feature-gates": "$gates"
+- |
+  apiVersion: kubeproxy.config.k8s.io/v1alpha1
+  kind: KubeProxyConfiguration
+  metadata:
+    name: config
+  featureGates:
 $(list_gates "$gates")
 EOF
+    fi
+
     info "kind-config.yaml:"
     cat "${CSI_PROW_WORK}/kind-config.yaml"
     if ! run kind create cluster --name csi-prow --config "${CSI_PROW_WORK}/kind-config.yaml" --wait 5m --image "$image"; then
