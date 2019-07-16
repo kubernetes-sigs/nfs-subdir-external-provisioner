@@ -485,7 +485,7 @@ start_cluster () {
                     tag="$(echo "${CSI_PROW_KUBERNETES_VERSION}" | sed -e 's/release-\(.*\)/v\1.0-release./')";;
                 *)
                     # We have to make something up. v1.0.0 did not work for some reasons.
-                    tag="v1.14.0-";;
+                    tag="v999.999.999-";;
             esac
             tag="$tag$(cd "$GOPATH/src/k8s.io/kubernetes" && git rev-list --abbrev-commit HEAD).csiprow"
             (cd "$GOPATH/src/k8s.io/kubernetes" && run git tag -f "$tag") || die "git tag failed"
