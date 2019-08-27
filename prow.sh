@@ -101,7 +101,7 @@ configvar CSI_PROW_GO_VERSION_GINKGO "${CSI_PROW_GO_VERSION_BUILD}" "Go version 
 # kind version to use. If the pre-installed version is different,
 # the desired version is downloaded from https://github.com/kubernetes-sigs/kind/releases/download/
 # (if available), otherwise it is built from source.
-configvar CSI_PROW_KIND_VERSION 2555d8e09d5a77ee718414cec9f6083dfa028dc5 "kind"
+configvar CSI_PROW_KIND_VERSION "v0.5.0" "kind"
 
 # ginkgo test runner version to use. If the pre-installed version is
 # different, the desired version is built from source.
@@ -126,19 +126,19 @@ configvar CSI_PROW_BUILD_JOB true "building code in repo enabled"
 # use the same settings as for "latest" Kubernetes. This works
 # as long as there are no breaking changes in Kubernetes, like
 # deprecating or changing the implementation of an alpha feature.
-configvar CSI_PROW_KUBERNETES_VERSION 1.13.3 "Kubernetes"
+configvar CSI_PROW_KUBERNETES_VERSION 1.15.3 "Kubernetes"
 
 # This is a hack to workaround the issue that each version
 # of kind currently only supports specific patch versions of
 # Kubernetes. We need to override CSI_PROW_KUBERNETES_VERSION
 # passed in by our CI/pull jobs to the versions that
-# kind v0.4.0 supports.
+# kind v0.5.0 supports.
 #
 # If the version is prefixed with "release-", then nothing
 # is overridden.
-override_k8s_version "1.13.7"
-override_k8s_version "1.14.3"
-override_k8s_version "1.15.0"
+override_k8s_version "1.13.10"
+override_k8s_version "1.14.6"
+override_k8s_version "1.15.3"
 
 # CSI_PROW_KUBERNETES_VERSION reduced to first two version numbers and
 # with underscore (1_13 instead of 1.13.3) and in uppercase (LATEST
