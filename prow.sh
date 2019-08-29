@@ -223,6 +223,10 @@ configvar CSI_PROW_SANITY_SERVICE "hostpath-service" "Kubernetes TCP service nam
 configvar CSI_PROW_SANITY_POD "csi-hostpathplugin-0" "Kubernetes pod with CSI driver"
 configvar CSI_PROW_SANITY_CONTAINER "hostpath" "Kubernetes container with CSI driver"
 
+# The version of dep to use for 'make test-vendor'. Ignored if the project doesn't
+# use dep. Only binary releases of dep are supported (https://github.com/golang/dep/releases).
+configvar CSI_PROW_DEP_VERSION v0.5.1 "golang dep version to be used for vendor checking"
+
 # Each job can run one or more of the following tests, identified by
 # a single word:
 # - unit testing
@@ -394,6 +398,15 @@ install_ginkgo () {
     # We have to get dependencies and hence can't call just "go build".
     run_with_go "${CSI_PROW_GO_VERSION_GINKGO}" go get github.com/onsi/ginkgo/ginkgo || die "building ginkgo failed" &&
     mv "$GOPATH/bin/ginkgo" "${CSI_PROW_BIN}"
+}
+
+# Ensure that we have the desired version of dep.
+install_dep () {
+    if dep version 2>/dev/null | grep -q "version:.*${CSI_PROW_DEP_VERSION}$"; then
+        return
+    fi
+    run curl --fail --location -o "${CSI_PROW_WORK}/bin/dep" "https://github.com/golang/dep/releases/download/v0.5.4/dep-linux-amd64" &&
+        chmod u+x "${CSI_PROW_WORK}/bin/dep"
 }
 
 # This checks out a repo ("https://github.com/kubernetes/kubernetes")
@@ -936,6 +949,10 @@ main () {
         # changes in "release-tools" in a PR (that fails the "is release-tools unmodified"
         # test).
         if tests_enabled "unit"; then
+            if [ -f Gopkg.toml ] && ! install_dep; then
+                warn "installing 'dep' failed, cannot test vendoring"
+                ret=1
+            fi
             if ! run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make -k test 2>&1 | make_test_to_junit; then
                 warn "'make test' failed, proceeding anyway"
                 ret=1
