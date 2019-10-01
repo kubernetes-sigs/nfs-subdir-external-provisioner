@@ -58,11 +58,14 @@ Next you must edit the provisioner's deployment file to add connection informati
 
 ```yaml
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: nfs-client-provisioner
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
   strategy:
     type: Recreate
   template:
