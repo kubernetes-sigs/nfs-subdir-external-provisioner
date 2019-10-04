@@ -106,3 +106,37 @@ Kubernetes releases:
 
     CSI_PROW_KUBERNETES_VERSION=1.13.3 ./.prow.sh
     CSI_PROW_KUBERNETES_VERSION=latest ./.prow.sh
+
+Dependencies and vendoring
+--------------------------
+
+Most projects will (eventually) use `go mod` to manage
+dependencies. `dep` is also still supported by `csi-release-tools`,
+but not documented here because it's not recommended anymore.
+
+The usual instructions for using [go
+modules](https://github.com/golang/go/wiki/Modules) apply. Here's a cheat sheet
+for some of the relevant commands:
+- list available updates: `GO111MODULE=on go list -u -m all`
+- update or add a single dependency: `GO111MODULE=on go get <package>`
+- update all dependencies to their next minor or patch release:
+  `GO111MODULE=on go get ./...` (add `-u=patch` to limit to patch
+  releases)
+- lock onto a specific version: `GO111MODULE=on go get <package>@<version>`
+- clean up `go.mod`: `GO111MODULE=on go mod tidy`
+- update vendor directory: `GO111MODULE=on go mod vendor`
+
+`GO111MODULE=on` can be left out when using Go >= 1.13 or when the
+source is checked out outside of `$GOPATH`.
+
+`go mod tidy` must be used to ensure that the listed dependencies are
+really still needed. Changing import statements or a tentative `go
+get` can result in stale dependencies.
+
+The `test-vendor` verifies that it was used when run locally or in a
+pre-merge CI job. If a `vendor` directory is present, it will also
+verify that it's content is up-to-date.
+
+The `vendor` directory is optional. It is still present in projects
+because it avoids downloading sources during CI builds. If this is no
+longer deemed necessary, then a project can also remove the directory.
