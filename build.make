@@ -57,13 +57,17 @@ else
 TESTARGS =
 endif
 
+ARCH := $(if $(GOARCH),$(GOARCH),$(shell go env GOARCH))
+
 # Specific packages can be excluded from each of the tests below by setting the *_FILTER_CMD variables
 # to something like "| grep -v 'github.com/kubernetes-csi/project/pkg/foobar'". See usage below.
 
 build-%:
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$* ./cmd/$*
-	CGO_ENABLED=0 GOOS=windows go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$*.exe ./cmd/$*
+	if [ "$$ARCH" = "amd64" ]; then \
+		CGO_ENABLED=0 GOOS=windows go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$*.exe ./cmd/$* ; \
+	fi
 
 container-%: build-%
 	docker build -t $*:latest -f $(shell if [ -e ./cmd/$*/Dockerfile ]; then echo ./cmd/$*/Dockerfile; else echo Dockerfile; fi) --label revision=$(REV) .
