@@ -106,3 +106,57 @@ Kubernetes releases:
 
     CSI_PROW_KUBERNETES_VERSION=1.13.3 ./.prow.sh
     CSI_PROW_KUBERNETES_VERSION=latest ./.prow.sh
+
+Dependencies and vendoring
+--------------------------
+
+Most projects will (eventually) use `go mod` to manage
+dependencies. `dep` is also still supported by `csi-release-tools`,
+but not documented here because it's not recommended anymore.
+
+The usual instructions for using [go
+modules](https://github.com/golang/go/wiki/Modules) apply. Here's a cheat sheet
+for some of the relevant commands:
+- list available updates: `GO111MODULE=on go list -u -m all`
+- update or add a single dependency: `GO111MODULE=on go get <package>`
+- update all dependencies to their next minor or patch release:
+  `GO111MODULE=on go get ./...` (add `-u=patch` to limit to patch
+  releases)
+- lock onto a specific version: `GO111MODULE=on go get <package>@<version>`
+- clean up `go.mod`: `GO111MODULE=on go mod tidy`
+- update vendor directory: `GO111MODULE=on go mod vendor`
+
+`GO111MODULE=on` can be left out when using Go >= 1.13 or when the
+source is checked out outside of `$GOPATH`.
+
+`go mod tidy` must be used to ensure that the listed dependencies are
+really still needed. Changing import statements or a tentative `go
+get` can result in stale dependencies.
+
+The `test-vendor` verifies that it was used when run locally or in a
+pre-merge CI job. If a `vendor` directory is present, it will also
+verify that it's content is up-to-date.
+
+The `vendor` directory is optional. It is still present in projects
+because it avoids downloading sources during CI builds. If this is no
+longer deemed necessary, then a project can also remove the directory.
+
+When using packages that are part of the Kubernetes source code, the
+commands above are not enough because the [lack of semantic
+versioning](https://github.com/kubernetes/kubernetes/issues/72638)
+prevents `go mod` from finding newer releases. Importing directly from
+`kubernetes/kubernetes` also needs `replace` statements to override
+the fake `v0.0.0` versions
+(https://github.com/kubernetes/kubernetes/issues/79384). The
+`go-get-kubernetes.sh` script can be used to update all packages in
+lockstep to a different Kubernetes version. It takes a single version
+number like "1.16.0".
+
+Conversion of a repository that uses `dep` to `go mod` can be done with:
+
+    GO111MODULE=on go mod init
+    release-tools/go-get-kubernetes.sh <current Kubernetes version from Gopkg.toml>
+    GO111MODULE=on go mod tidy
+    GO111MODULE=on go mod vendor
+    git rm -f Gopkg.toml Gopkg.lock
+    git add go.mod go.sum vendor

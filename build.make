@@ -130,6 +130,26 @@ test-fmt:
 # - the fabricated merge commit leaves go.mod, go.sum and vendor dir unchanged
 # - release-tools also didn't change (changing rules or Go version might lead to
 #   a different result and thus must be tested)
+# - import statements not changed (because if they change, go.mod might have to be updated)
+#
+# "git diff" is intelligent enough to annotate changes inside the "import" block in
+# the start of the diff hunk:
+#
+# diff --git a/rpc/common.go b/rpc/common.go
+# index bb4a5c4..5fa4271 100644
+# --- a/rpc/common.go
+# +++ b/rpc/common.go
+# @@ -21,7 +21,6 @@ import (
+#         "fmt"
+#         "time"
+#
+# -       "google.golang.org/grpc"
+#         "google.golang.org/grpc/codes"
+#         "google.golang.org/grpc/status"
+#
+# We rely on that to find such changes.
+#
+# Vendoring is optional when using go.mod.
 .PHONY: test-vendor
 test: test-vendor
 test-vendor:
@@ -140,22 +160,37 @@ test-vendor:
 			*v0.[56789]*) dep check && echo "vendor up-to-date" || false;; \
 			*) echo "skipping check, dep >= 0.5 required";; \
 		esac; \
-	  else \
-		echo "Repo uses 'go mod' for vendoring."; \
+	elif [ -f go.mod ]; then \
+		echo "Repo uses 'go mod'."; \
 		if [ "$${JOB_NAME}" ] && \
                    ( [ "$${JOB_TYPE}" != "presubmit" ] || \
-                     [ $$(git diff "${PULL_BASE_SHA}..HEAD" -- go.mod go.sum vendor release-tools | wc -l) -eq 0 ] ); then \
-			echo "Skipping vendor check because the Prow pre-submit job does not change vendoring."; \
-		elif ! GO111MODULE=on go mod vendor; then \
+                     [ $$( (git diff "${PULL_BASE_SHA}..HEAD" -- go.mod go.sum vendor release-tools; \
+                            git diff "${PULL_BASE_SHA}..HEAD" | grep -e '^@@.*@@ import (' -e '^[+-]import') | \
+		          wc -l) -eq 0 ] ); then \
+			echo "Skipping vendor check because the Prow pre-submit job does not affect dependencies."; \
+		elif ! GO111MODULE=on go mod tidy; then \
 			echo "ERROR: vendor check failed."; \
 			false; \
-		elif [ $$(git status --porcelain -- vendor | wc -l) -gt 0 ]; then \
-			echo "ERROR: vendor directory *not* up-to-date, it did get modified by 'GO111MODULE=on go mod vendor':"; \
-			git status -- vendor; \
-			git diff -- vendor; \
+		elif [ $$(git status --porcelain -- go.mod go.sum | wc -l) -gt 0 ]; then \
+			echo "ERROR: go module files *not* up-to-date, they did get modified by 'GO111MODULE=on go mod tidy':"; \
+			git diff -- go.mod go.sum; \
 			false; \
+		elif [ -d vendor ]; then \
+			if ! GO111MODULE=on go mod vendor; then \
+				echo "ERROR: vendor check failed."; \
+				false; \
+			elif [ $$(git status --porcelain -- vendor | wc -l) -gt 0 ]; then \
+				echo "ERROR: vendor directory *not* up-to-date, it did get modified by 'GO111MODULE=on go mod vendor':"; \
+				git status -- vendor; \
+				git diff -- vendor; \
+				false; \
+			else \
+				echo "Go dependencies and vendor directory up-to-date."; \
+			fi; \
+		else \
+			echo "Go dependencies up-to-date."; \
 		fi; \
-	 fi;
+	fi
 
 .PHONY: test-subtree
 test: test-subtree
