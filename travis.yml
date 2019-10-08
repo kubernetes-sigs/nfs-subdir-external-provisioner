@@ -2,6 +2,8 @@ language: go
 sudo: required
 services:
   - docker
+git:
+  depth: false
 matrix:
   include:
   - go: 1.12.4
