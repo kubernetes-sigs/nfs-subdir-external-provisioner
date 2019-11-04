@@ -85,6 +85,12 @@ get_versioned_variable () {
     echo "$value"
 }
 
+# If we have a vendor directory, then use it. We must be careful to only
+# use this for "make" invocations inside the project's repo itself because
+# setting it globally can break other go usages (like "go get <some command>"
+# which is disabled with GOFLAGS=-mod=vendor).
+configvar GOFLAGS_VENDOR "$( [ -d vendor ] && echo '-mod=vendor' )" "Go flags for using the vendor directory"
+
 # Go versions can be specified seperately for different tasks
 # If the pre-installed Go is missing or a different
 # version, the required version here will get installed
@@ -928,7 +934,7 @@ main () {
     images=
     if ${CSI_PROW_BUILD_JOB}; then
         # A successful build is required for testing.
-        run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make all || die "'make all' failed"
+        run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make all "GOFLAGS_VENDOR=${GOFLAGS_VENDOR}" || die "'make all' failed"
         # We don't want test failures to prevent E2E testing below, because the failure
         # might have been minor or unavoidable, for example when experimenting with
         # changes in "release-tools" in a PR (that fails the "is release-tools unmodified"
@@ -938,13 +944,13 @@ main () {
                 warn "installing 'dep' failed, cannot test vendoring"
                 ret=1
             fi
-            if ! run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make -k test 2>&1 | make_test_to_junit; then
+            if ! run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make -k test "GOFLAGS_VENDOR=${GOFLAGS_VENDOR}" 2>&1 | make_test_to_junit; then
                 warn "'make test' failed, proceeding anyway"
                 ret=1
             fi
         fi
         # Required for E2E testing.
-        run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make container || die "'make container' failed"
+        run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make container "GOFLAGS_VENDOR=${GOFLAGS_VENDOR}" || die "'make container' failed"
     fi
 
     if tests_need_kind; then
