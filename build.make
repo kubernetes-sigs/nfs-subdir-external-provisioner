@@ -22,6 +22,9 @@
 # including build.make.
 REGISTRY_NAME=quay.io/k8scsi
 
+# Can be set to -mod=vendor to ensure that the "vendor" directory is used.
+GOFLAGS_VENDOR=
+
 # Revision that gets built into each binary via the main.version
 # string. Uses the `git describe` output based on the most recent
 # version tag with a short revision suffix or, if nothing has been
@@ -64,9 +67,9 @@ ARCH := $(if $(GOARCH),$(GOARCH),$(shell go env GOARCH))
 
 build-%: check-go-version-go
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$* ./cmd/$*
+	CGO_ENABLED=0 GOOS=linux go build $(GOFLAGS_VENDOR) -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$* ./cmd/$*
 	if [ "$$ARCH" = "amd64" ]; then \
-		CGO_ENABLED=0 GOOS=windows go build -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$*.exe ./cmd/$* ; \
+		CGO_ENABLED=0 GOOS=windows go build $(GOFLAGS_VENDOR) -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o ./bin/$*.exe ./cmd/$* ; \
 	fi
 
 container-%: build-%
@@ -103,13 +106,13 @@ test: check-go-version-go
 test: test-go
 test-go:
 	@ echo; echo "### $@:"
-	go test `go list ./... | grep -v -e 'vendor' -e '/test/e2e$$' $(TEST_GO_FILTER_CMD)` $(TESTARGS)
+	go test $(GOFLAGS_VENDOR) `go list $(GOFLAGS_VENDOR) ./... | grep -v -e 'vendor' -e '/test/e2e$$' $(TEST_GO_FILTER_CMD)` $(TESTARGS)
 
 .PHONY: test-vet
 test: test-vet
 test-vet:
 	@ echo; echo "### $@:"
-	go vet `go list ./... | grep -v vendor $(TEST_VET_FILTER_CMD)`
+	go test $(GOFLAGS_VENDOR) `go list $(GOFLAGS_VENDOR) ./... | grep -v vendor $(TEST_VET_FILTER_CMD)`
 
 .PHONY: test-fmt
 test: test-fmt
