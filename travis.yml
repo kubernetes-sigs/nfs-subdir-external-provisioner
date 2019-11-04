@@ -13,9 +13,9 @@ before_script:
 - chmod u+x bin/dep
 - export PATH=$PWD/bin:$PATH
 script:
-- make -k all test
+- make -k all test GOFLAGS_VENDOR=$( [ -d vendor ] && echo '-mod=vendor' )
 after_success:
   - if [ "${TRAVIS_PULL_REQUEST}" == "false" ]; then
       docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}" quay.io;
-      make push;
+      make push GOFLAGS_VENDOR=$( [ -d vendor ] && echo '-mod=vendor' );
     fi
