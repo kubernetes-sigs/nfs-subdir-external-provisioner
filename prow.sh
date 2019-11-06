@@ -683,16 +683,16 @@ EOF
 
 }
 
-# Gets logs of all containers in the default namespace. When passed -f, kubectl will
+# Gets logs of all containers in all namespaces. When passed -f, kubectl will
 # keep running and capture new output. Prints the pid of all background processes.
 # The caller must kill (when using -f) and/or wait for them.
 #
 # May be called multiple times and thus appends.
 start_loggers () {
-    kubectl get pods -o go-template --template='{{range .items}}{{.metadata.name}} {{range .spec.containers}}{{.name}} {{end}}{{"\n"}}{{end}}' | while read -r pod containers; do
+    kubectl get pods --all-namespaces -o go-template --template='{{range .items}}{{.metadata.namespace}} {{.metadata.name}} {{range .spec.containers}}{{.name}} {{end}}{{"\n"}}{{end}}' | while read -r namespace pod containers; do
         for container in $containers; do
-            mkdir -p "${ARTIFACTS}/$pod"
-            kubectl logs "$@" "$pod" "$container" >>"${ARTIFACTS}/$pod/$container.log" &
+            mkdir -p "${ARTIFACTS}/$namespace/$pod"
+            kubectl logs -n "$namespace" "$@" "$pod" "$container" >>"${ARTIFACTS}/$namespace/$pod/$container.log" &
             echo "$!"
         done
     done
