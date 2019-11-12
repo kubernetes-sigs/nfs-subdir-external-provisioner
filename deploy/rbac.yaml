@@ -42,7 +42,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: leader-locking-nfs-client-provisioner
     # replace with namespace where provisioner is deployed
-    namespace: default
+  namespace: default
 rules:
   - apiGroups: [""]
     resources: ["endpoints"]
