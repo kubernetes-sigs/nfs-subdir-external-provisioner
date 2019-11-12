@@ -322,6 +322,9 @@ configvar CSI_PROW_E2E_ALPHA_GATES_1_16 'VolumeSnapshotDataSource=true' "alpha f
 configvar CSI_PROW_E2E_ALPHA_GATES_LATEST 'VolumeSnapshotDataSource=true' "alpha feature gates for latest Kubernetes"
 configvar CSI_PROW_E2E_ALPHA_GATES "$(get_versioned_variable CSI_PROW_E2E_ALPHA_GATES "${csi_prow_kubernetes_version_suffix}")" "alpha E2E feature gates"
 
+# Which external-snapshotter tag to use for the snapshotter CRD and snapshot-controller deployment
+configvar CSI_SNAPSHOTTER_VERSION 'v2.0.0-rc4' "external-snapshotter version tag"
+
 # Some tests are known to be unusable in a KinD cluster. For example,
 # stopping kubelet with "ssh <node IP> systemctl stop kubelet" simply
 # doesn't work. Such tests should be written in a way that they verify
@@ -657,6 +660,59 @@ install_hostpath () {
     fi
 }
 
+# Installs all nessesary snapshotter CRDs  
+install_snapshot_crds() {
+  # Wait until volumesnapshot CRDs are in place.
+  CRD_BASE_DIR="https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/config/crd"
+  kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshotclasses.yaml" --validate=false
+  kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshots.yaml" --validate=false
+  kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshotcontents.yaml" --validate=false
+  cnt=0
+  until kubectl get volumesnapshotclasses.snapshot.storage.k8s.io \
+    && kubectl get volumesnapshots.snapshot.storage.k8s.io \
+    && kubectl get volumesnapshotcontents.snapshot.storage.k8s.io; do
+    if [ $cnt -gt 30 ]; then
+        echo >&2 "ERROR: snapshot CRDs not ready after over 1 min"
+        exit 1
+    fi
+    echo "$(date +%H:%M:%S)" "waiting for snapshot CRDs, attempt #$cnt"
+	cnt=$((cnt + 1))
+    sleep 2
+  done
+}
+
+# Install snapshot controller and associated RBAC, retrying until the pod is running.
+install_snapshot_controller() {
+  kubectl apply -f "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml"
+  cnt=0
+  until kubectl get clusterrolebinding snapshot-controller-role; do
+     if [ $cnt -gt 30 ]; then
+        echo "Cluster role bindings:"
+        kubectl describe clusterrolebinding
+        echo >&2 "ERROR: snapshot controller RBAC not ready after over 5 min"
+        exit 1
+    fi
+    echo "$(date +%H:%M:%S)" "waiting for snapshot RBAC setup complete, attempt #$cnt"
+	cnt=$((cnt + 1))
+    sleep 10   
+  done
+
+
+  kubectl apply -f "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml"
+  cnt=0
+  until kubectl get statefulset snapshot-controller | grep snapshot-controller | grep "1/1"; do
+    if [ $cnt -gt 30 ]; then
+        echo "Running statefulsets:"
+        kubectl describe statefulsets
+        echo >&2 "ERROR: snapshot controller not ready after over 5 min"
+        exit 1
+    fi
+    echo "$(date +%H:%M:%S)" "waiting for snapshot controller deployment to complete, attempt #$cnt"
+	cnt=$((cnt + 1))
+    sleep 10   
+  done
+}
+
 # collect logs and cluster status (like the version of all components, Kubernetes version, test version)
 collect_cluster_info () {
     cat <<EOF
@@ -927,6 +983,10 @@ make_test_to_junit () {
     fi
 }
 
+function version_gt() { 
+    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; 
+}
+
 main () {
     local images ret
     ret=0
@@ -987,6 +1047,16 @@ main () {
         if tests_need_non_alpha_cluster; then
             start_cluster || die "starting the non-alpha cluster failed"
 
+            # Install necessary snapshot CRDs and snapshot controller
+            # For Kubernetes 1.17+, we will install the CRDs and snapshot controller.
+            if version_gt "${CSI_PROW_KUBERNETES_VERSION}" "1.16.255" || "${CSI_PROW_KUBERNETES_VERSION}" == "latest"; then
+                info "Version ${CSI_PROW_KUBERNETES_VERSION}, installing CRDs and snapshot controller"
+                install_snapshot_crds
+                install_snapshot_controller
+            else
+                info "Version ${CSI_PROW_KUBERNETES_VERSION}, skipping CRDs and snapshot controller"
+            fi
+
             # Installing the driver might be disabled.
             if install_hostpath "$images"; then
                 collect_cluster_info
@@ -1022,6 +1092,16 @@ main () {
         if tests_need_alpha_cluster && [ "${CSI_PROW_E2E_ALPHA_GATES}" ]; then
             # Need to (re)create the cluster.
             start_cluster "${CSI_PROW_E2E_ALPHA_GATES}" || die "starting alpha cluster failed"
+
+            # Install necessary snapshot CRDs and snapshot controller
+            # For Kubernetes 1.17+, we will install the CRDs and snapshot controller.
+            if version_gt "${CSI_PROW_KUBERNETES_VERSION}" "1.16.255" || "${CSI_PROW_KUBERNETES_VERSION}" == "latest"; then
+                info "Version ${CSI_PROW_KUBERNETES_VERSION}, installing CRDs and snapshot controller"
+                install_snapshot_crds
+                install_snapshot_controller
+            else
+                info "Version ${CSI_PROW_KUBERNETES_VERSION}, skipping CRDs and snapshot controller"
+            fi
 
             # Installing the driver might be disabled.
             if install_hostpath "$images"; then
