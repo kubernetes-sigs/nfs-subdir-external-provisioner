@@ -580,6 +580,19 @@ EOF
     export KUBECONFIG
 }
 
+# Deletes kind cluster inside a prow job
+delete_cluster_inside_prow_job() {
+    # Inside a real Prow job it is better to clean up at runtime
+    # instead of leaving that to the Prow job cleanup code
+    # because the later sometimes times out (https://github.com/kubernetes-csi/csi-release-tools/issues/24#issuecomment-554765872).
+    if [ "$JOB_NAME" ]; then
+        if kind get clusters | grep -q csi-prow; then
+            run kind delete cluster --name=csi-prow || die "kind delete failed"
+        fi
+        unset KUBECONFIG
+    fi
+}
+
 # Looks for the deployment as specified by CSI_PROW_DEPLOYMENT and CSI_PROW_KUBERNETES_VERSION
 # in the given directory.
 find_deployment () {
@@ -1017,6 +1030,7 @@ main () {
                     fi
                 fi
             fi
+            delete_cluster_inside_prow_job
         fi
 
         if tests_need_alpha_cluster && [ "${CSI_PROW_E2E_ALPHA_GATES}" ]; then
@@ -1047,6 +1061,7 @@ main () {
                     fi
                 fi
             fi
+            delete_cluster_inside_prow_job
         fi
     fi
 
