@@ -107,8 +107,7 @@ configvar CSI_PROW_GO_VERSION_GINKGO "${CSI_PROW_GO_VERSION_BUILD}" "Go version 
 # kind version to use. If the pre-installed version is different,
 # the desired version is downloaded from https://github.com/kubernetes-sigs/kind/releases/download/
 # (if available), otherwise it is built from source.
-# TODO: https://github.com/kubernetes-csi/csi-release-tools/issues/39
-configvar CSI_PROW_KIND_VERSION "86bc23d84ac12dcb56a0528890736e2c347c2dc3" "kind"
+configvar CSI_PROW_KIND_VERSION "v0.6.0" "kind"
 
 # ginkgo test runner version to use. If the pre-installed version is
 # different, the desired version is built from source.
@@ -579,8 +578,7 @@ EOF
             die "Cluster creation failed again, giving up. See the 'kind-cluster' artifact directory for additional logs."
         fi
     fi
-    KUBECONFIG="$(kind get kubeconfig-path --name=csi-prow)"
-    export KUBECONFIG
+    export KUBECONFIG="${HOME}/.kube/config"
 }
 
 # Deletes kind cluster inside a prow job
