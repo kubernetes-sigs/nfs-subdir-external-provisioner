@@ -330,7 +330,11 @@ configvar CSI_SNAPSHOTTER_VERSION 'v2.0.0-rc4' "external-snapshotter version tag
 # whether they can run with the current cluster provider, but until
 # they are, we filter them out by name. Like the other test selection
 # variables, this is again a space separated list of regular expressions.
-configvar CSI_PROW_E2E_SKIP 'Disruptive' "tests that need to be skipped"
+#
+# "different node" test skips can be removed once
+# https://github.com/kubernetes/kubernetes/pull/82678 has been backported
+# to all the K8s versions we test against
+configvar CSI_PROW_E2E_SKIP 'Disruptive|different\s+node' "tests that need to be skipped"
 
 # This is the directory for additional result files. Usually set by Prow, but
 # if not (for example, when invoking manually) it defaults to the work directory.
@@ -525,6 +529,7 @@ kind: Cluster
 apiVersion: kind.sigs.k8s.io/v1alpha3
 nodes:
 - role: control-plane
+- role: worker
 - role: worker
 EOF
 
@@ -839,10 +844,6 @@ run_e2e () (
 
     install_e2e || die "building e2e.test failed"
     install_ginkgo || die "installing ginkgo failed"
-
-    # TODO (?): multi-node cluster (depends on https://github.com/kubernetes-csi/csi-driver-host-path/pull/14).
-    # When running on a multi-node cluster, we need to figure out where the
-    # hostpath driver was deployed and set ClientNodeName accordingly.
 
     generate_test_driver >"${CSI_PROW_WORK}/test-driver.yaml" || die "generating test-driver.yaml failed"
 
