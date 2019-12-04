@@ -713,10 +713,11 @@ install_snapshot_controller() {
 
   kubectl apply -f "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml"
   cnt=0
-  until kubectl get statefulset snapshot-controller | grep snapshot-controller | grep "1/1"; do
+  expected_running_pods=$(curl https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/"${CSI_SNAPSHOTTER_VERSION}"/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml | grep replicas | cut -d ':' -f 2-)
+  while [ "$(kubectl get pods -l app=snapshot-controller | grep 'Running' -c)" -lt "$expected_running_pods" ]; do
     if [ $cnt -gt 30 ]; then
-        echo "Running statefulsets:"
-        kubectl describe statefulsets
+        echo "snapshot-controller pod status:"
+        kubectl describe pods -l app=snapshot-controller
         echo >&2 "ERROR: snapshot controller not ready after over 5 min"
         exit 1
     fi
@@ -996,8 +997,30 @@ make_test_to_junit () {
     fi
 }
 
+# version_gt returns true if arg1 is greater than arg2.
+#
+# This function expects versions to be one of the following formats:
+#   X.Y.Z, release-X.Y.Z, vX.Y.Z
+#
+#   where X,Y, and Z are any number.
+#
+# Partial versions (1.2, release-1.2) work as well.
+# The follow substrings are stripped before version comparison:
+#   - "v"
+#   - "release-"
+#
+# Usage:
+# version_gt release-1.3 v1.2.0  (returns true)
+# version_gt v1.1.1 v1.2.0  (returns false)
+# version_gt 1.1.1 v1.2.0  (returns false)
+# version_gt 1.3.1 v1.2.0  (returns true)
+# version_gt 1.1.1 release-1.2.0  (returns false)
+# version_gt 1.2.0 1.2.2  (returns false)
 function version_gt() { 
-    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; 
+    versions=$(for ver in "$@"; do ver=${ver#release-}; echo "${ver#v}"; done)
+    greaterVersion=${1#"release-"};
+    greaterVersion=${greaterVersion#"v"};
+    test "$(printf '%s' "$versions" | sort -V | head -n 1)" != "$greaterVersion"
 }
 
 main () {
