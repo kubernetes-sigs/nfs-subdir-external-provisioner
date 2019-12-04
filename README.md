@@ -141,17 +141,6 @@ The `vendor` directory is optional. It is still present in projects
 because it avoids downloading sources during CI builds. If this is no
 longer deemed necessary, then a project can also remove the directory.
 
-When using packages that are part of the Kubernetes source code, the
-commands above are not enough because the [lack of semantic
-versioning](https://github.com/kubernetes/kubernetes/issues/72638)
-prevents `go mod` from finding newer releases. Importing directly from
-`kubernetes/kubernetes` also needs `replace` statements to override
-the fake `v0.0.0` versions
-(https://github.com/kubernetes/kubernetes/issues/79384). The
-`go-get-kubernetes.sh` script can be used to update all packages in
-lockstep to a different Kubernetes version. It takes a single version
-number like "1.16.0".
-
 Conversion of a repository that uses `dep` to `go mod` can be done with:
 
     GO111MODULE=on go mod init
@@ -160,3 +149,18 @@ Conversion of a repository that uses `dep` to `go mod` can be done with:
     GO111MODULE=on go mod vendor
     git rm -f Gopkg.toml Gopkg.lock
     git add go.mod go.sum vendor
+
+### Updating Kubernetes dependencies
+
+When using packages that are part of the Kubernetes source code, the
+commands above are not enough because the [lack of semantic
+versioning](https://github.com/kubernetes/kubernetes/issues/72638)
+prevents `go mod` from finding newer releases. Importing directly from
+`kubernetes/kubernetes` also needs `replace` statements to override
+the fake `v0.0.0` versions
+(https://github.com/kubernetes/kubernetes/issues/79384). The
+`go-get-kubernetes.sh` script can be used to update all packages in
+lockstep to a different Kubernetes version. Example usage:
+```
+$ ./release-tools/go-get-kubernetes.sh 1.16.4
+```
