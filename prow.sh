@@ -132,7 +132,7 @@ configvar CSI_PROW_BUILD_JOB true "building code in repo enabled"
 # use the same settings as for "latest" Kubernetes. This works
 # as long as there are no breaking changes in Kubernetes, like
 # deprecating or changing the implementation of an alpha feature.
-configvar CSI_PROW_KUBERNETES_VERSION 1.15.3 "Kubernetes"
+configvar CSI_PROW_KUBERNETES_VERSION 1.17.0 "Kubernetes"
 
 # This is a hack to workaround the issue that each version
 # of kind currently only supports specific patch versions of
@@ -142,7 +142,6 @@ configvar CSI_PROW_KUBERNETES_VERSION 1.15.3 "Kubernetes"
 #
 # If the version is prefixed with "release-", then nothing
 # is overridden.
-override_k8s_version "1.14.6"
 override_k8s_version "1.15.3"
 
 # CSI_PROW_KUBERNETES_VERSION reduced to first two version numbers and
@@ -206,9 +205,9 @@ configvar CSI_PROW_HOSTPATH_CANARY "" "hostpath image"
 #
 # CSI_PROW_E2E_REPO=none disables E2E testing.
 # TOOO: remove versioned variables and make e2e version match k8s version
-configvar CSI_PROW_E2E_VERSION_1_14 v1.14.0 "E2E version for Kubernetes 1.14.x"
 configvar CSI_PROW_E2E_VERSION_1_15 v1.15.0 "E2E version for Kubernetes 1.15.x"
 configvar CSI_PROW_E2E_VERSION_1_16 v1.16.0 "E2E version for Kubernetes 1.16.x"
+configvar CSI_PROW_E2E_VERSION_1_17 v1.17.0 "E2E version for Kubernetes 1.17.x"
 # TODO: add new CSI_PROW_E2E_VERSION entry for future Kubernetes releases
 configvar CSI_PROW_E2E_VERSION_LATEST master "E2E version for Kubernetes master" # testing against Kubernetes master is already tracking a moving target, so we might as well use a moving E2E version
 configvar CSI_PROW_E2E_REPO_LATEST https://github.com/kubernetes/kubernetes "E2E repo for Kubernetes >= 1.13.x" # currently the same for all versions
@@ -278,6 +277,14 @@ tests_need_alpha_cluster () {
     tests_enabled "parallel-alpha" "serial-alpha"
 }
 
+# Regex for non-alpha, feature-tagged tests that should be run.
+#
+# Starting with 1.17, snapshots is beta, but the E2E tests still have the
+# [Feature:] tag. They need to be explicitly enabled.
+configvar CSI_PROW_E2E_FOCUS_1_15 '^' "non-alpha, feature-tagged tests for Kubernetes = 1.15" # no tests to run, match nothing
+configvar CSI_PROW_E2E_FOCUS_1_16 '^' "non-alpha, feature-tagged tests for Kubernetes = 1.16" # no tests to run, match nothing
+configvar CSI_PROW_E2E_FOCUS_LATEST '\[Feature:VolumeSnapshotDataSource\]' "non-alpha, feature-tagged tests for Kubernetes >= 1.17"
+configvar CSI_PROW_E2E_FOCUS "$(get_versioned_variable CSI_PROW_E2E_FOCUS "${csi_prow_kubernetes_version_suffix}")" "non-alpha, feature-tagged tests"
 
 # Serial vs. parallel is always determined by these regular expressions.
 # Individual regular expressions are seperated by spaces for readability
@@ -313,12 +320,11 @@ configvar CSI_PROW_E2E_ALPHA "$(get_versioned_variable CSI_PROW_E2E_ALPHA "${csi
 # kubernetes-csi components must be updated, either by disabling
 # the failing test for "latest" or by updating the test and not running
 # it anymore for older releases.
-configvar CSI_PROW_E2E_ALPHA_GATES_1_14 'VolumeSnapshotDataSource=true,ExpandCSIVolumes=true' "alpha feature gates for Kubernetes 1.14"
 configvar CSI_PROW_E2E_ALPHA_GATES_1_15 'VolumeSnapshotDataSource=true,ExpandCSIVolumes=true' "alpha feature gates for Kubernetes 1.15"
 configvar CSI_PROW_E2E_ALPHA_GATES_1_16 'VolumeSnapshotDataSource=true' "alpha feature gates for Kubernetes 1.16"
 # TODO: add new CSI_PROW_ALPHA_GATES_xxx entry for future Kubernetes releases and
 # add new gates to CSI_PROW_E2E_ALPHA_GATES_LATEST.
-configvar CSI_PROW_E2E_ALPHA_GATES_LATEST 'VolumeSnapshotDataSource=true' "alpha feature gates for latest Kubernetes"
+configvar CSI_PROW_E2E_ALPHA_GATES_LATEST '' "alpha feature gates for latest Kubernetes"
 configvar CSI_PROW_E2E_ALPHA_GATES "$(get_versioned_variable CSI_PROW_E2E_ALPHA_GATES "${csi_prow_kubernetes_version_suffix}")" "alpha E2E feature gates"
 
 # Which external-snapshotter tag to use for the snapshotter CRD and snapshot-controller deployment
@@ -1109,6 +1115,16 @@ main () {
                          -focus="External.Storage" \
                          -skip="$(regex_join "${CSI_PROW_E2E_SERIAL}" "${CSI_PROW_E2E_ALPHA}" "${CSI_PROW_E2E_SKIP}")"; then
                         warn "E2E parallel failed"
+                        ret=1
+                    fi
+
+                    # Run tests that are feature tagged, but non-alpha
+                    # Ignore: Double quote to prevent globbing and word splitting.
+                    # shellcheck disable=SC2086
+                    if ! run_e2e parallel ${CSI_PROW_GINKO_PARALLEL} \
+                         -focus="External.Storage.*($(regex_join "${CSI_PROW_E2E_FOCUS}"))" \
+                         -skip="$(regex_join "${CSI_PROW_E2E_SERIAL}")"; then
+                        warn "E2E parallel features failed"
                         ret=1
                     fi
                 fi
