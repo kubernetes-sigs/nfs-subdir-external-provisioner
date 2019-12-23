@@ -1013,6 +1013,7 @@ make_test_to_junit () {
 # The follow substrings are stripped before version comparison:
 #   - "v"
 #   - "release-"
+#   - "kubernetes-"
 #
 # Usage:
 # version_gt release-1.3 v1.2.0  (returns true)
@@ -1022,8 +1023,9 @@ make_test_to_junit () {
 # version_gt 1.1.1 release-1.2.0  (returns false)
 # version_gt 1.2.0 1.2.2  (returns false)
 function version_gt() { 
-    versions=$(for ver in "$@"; do ver=${ver#release-}; echo "${ver#v}"; done)
+    versions=$(for ver in "$@"; do ver=${ver#release-}; ver=${ver#kubernetes-}; echo "${ver#v}"; done)
     greaterVersion=${1#"release-"};
+    greaterVersion=${greaterVersion#"kubernetes-"};
     greaterVersion=${greaterVersion#"v"};
     test "$(printf '%s' "$versions" | sort -V | head -n 1)" != "$greaterVersion"
 }
