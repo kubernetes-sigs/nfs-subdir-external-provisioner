@@ -1123,7 +1123,7 @@ main () {
                     # Run tests that are feature tagged, but non-alpha
                     # Ignore: Double quote to prevent globbing and word splitting.
                     # shellcheck disable=SC2086
-                    if ! run_e2e parallel ${CSI_PROW_GINKO_PARALLEL} \
+                    if ! run_e2e parallel-features ${CSI_PROW_GINKO_PARALLEL} \
                          -focus="External.Storage.*($(regex_join "${CSI_PROW_E2E_FOCUS}"))" \
                          -skip="$(regex_join "${CSI_PROW_E2E_SERIAL}")"; then
                         warn "E2E parallel features failed"
