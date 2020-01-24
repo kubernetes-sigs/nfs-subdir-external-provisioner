@@ -81,7 +81,7 @@ on what is enabled in Prow, see
 https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-csi
 
 Test results for periodic jobs are visible in
-https://testgrid.k8s.io/sig-storage-csi
+https://testgrid.k8s.io/sig-storage-csi-ci
 
 It is possible to reproduce the Prow testing locally on a suitable machine:
 - Linux host
