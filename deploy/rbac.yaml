@@ -41,7 +41,7 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: leader-locking-nfs-client-provisioner
-    # replace with namespace where provisioner is deployed
+  # replace with namespace where provisioner is deployed
   namespace: default
 rules:
   - apiGroups: [""]
@@ -52,6 +52,8 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: leader-locking-nfs-client-provisioner
+  # replace with namespace where provisioner is deployed
+  namespace: default
 subjects:
   - kind: ServiceAccount
     name: nfs-client-provisioner
