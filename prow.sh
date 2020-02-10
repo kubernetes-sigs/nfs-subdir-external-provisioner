@@ -569,6 +569,13 @@ kubeadmConfigPatches:
     kubeletExtraArgs:
       "feature-gates": "$gates"
 - |
+  apiVersion: kubelet.config.k8s.io/v1beta1
+  kind: KubeletConfiguration
+  metadata:
+    name: config
+  featureGates:
+$(list_gates "$gates")
+- |
   apiVersion: kubeproxy.config.k8s.io/v1alpha1
   kind: KubeProxyConfiguration
   metadata:
