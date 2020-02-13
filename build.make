@@ -113,7 +113,7 @@ test-go:
 test: test-vet
 test-vet:
 	@ echo; echo "### $@:"
-	go test $(GOFLAGS_VENDOR) `go list $(GOFLAGS_VENDOR) ./... | grep -v vendor $(TEST_VET_FILTER_CMD)`
+	go vet $(GOFLAGS_VENDOR) `go list $(GOFLAGS_VENDOR) ./... | grep -v vendor $(TEST_VET_FILTER_CMD)`
 
 .PHONY: test-fmt
 test: test-fmt
