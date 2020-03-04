@@ -85,6 +85,8 @@ get_versioned_variable () {
     echo "$value"
 }
 
+configvar CSI_PROW_BUILD_PLATFORMS "linux amd64; windows amd64 .exe; linux ppc64le -ppc64le; linux s390x -s390x" "Go target platforms (= GOOS + GOARCH) and file suffix of the resulting binaries"
+
 # If we have a vendor directory, then use it. We must be careful to only
 # use this for "make" invocations inside the project's repo itself because
 # setting it globally can break other go usages (like "go get <some command>"
@@ -1026,7 +1028,7 @@ main () {
     images=
     if ${CSI_PROW_BUILD_JOB}; then
         # A successful build is required for testing.
-        run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make all "GOFLAGS_VENDOR=${GOFLAGS_VENDOR}" || die "'make all' failed"
+        run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make all "GOFLAGS_VENDOR=${GOFLAGS_VENDOR}" "BUILD_PLATFORMS=${CSI_PROW_BUILD_PLATFORMS}" || die "'make all' failed"
         # We don't want test failures to prevent E2E testing below, because the failure
         # might have been minor or unavoidable, for example when experimenting with
         # changes in "release-tools" in a PR (that fails the "is release-tools unmodified"
