@@ -8,9 +8,6 @@ metadata:
   namespace: default
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: nfs-client-provisioner
   strategy:
     type: Recreate
   selector:
