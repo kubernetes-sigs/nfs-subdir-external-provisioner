@@ -342,7 +342,7 @@ configvar CSI_PROW_E2E_ALPHA_GATES_LATEST '' "alpha feature gates for latest Kub
 configvar CSI_PROW_E2E_ALPHA_GATES "$(get_versioned_variable CSI_PROW_E2E_ALPHA_GATES "${csi_prow_kubernetes_version_suffix}")" "alpha E2E feature gates"
 
 # Which external-snapshotter tag to use for the snapshotter CRD and snapshot-controller deployment
-configvar CSI_SNAPSHOTTER_VERSION 'v2.0.0' "external-snapshotter version tag"
+configvar CSI_SNAPSHOTTER_VERSION 'v2.0.1' "external-snapshotter version tag"
 
 # Some tests are known to be unusable in a KinD cluster. For example,
 # stopping kubelet with "ssh <node IP> systemctl stop kubelet" simply
