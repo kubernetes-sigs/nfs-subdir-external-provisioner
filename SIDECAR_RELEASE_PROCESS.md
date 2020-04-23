@@ -50,7 +50,7 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 ## Release Process
 1. Identify all issues and ongoing PRs that should go into the release, and
   drive them to resolution.
-1. Download [K8s release notes
+1. Download v2.8+ [K8s release notes
   generator](https://github.com/kubernetes/release/tree/master/cmd/release-notes)
 1. Generate release notes for the release. Replace arguments with the relevant
   information.
@@ -62,13 +62,10 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
         ```
     * For new patch releases on a release branch:
         ```
-        GITHUB_TOKEN=<token> release-notes --branch=release-1.1
-        --start-rev=v1.1.1 --end-sha=f0a9219b29cc9053047c39d149ce9b22bc7b918b
+        GITHUB_TOKEN=<token> release-notes --discover=patch-to-latest --branch=release-1.1
         --github-org=kubernetes-csi --github-repo=external-provisioner
         --required-author="" --output out.md
         ```
-        * `--start-rev` should point to the last patch release from the release branch.
-        * `--end-sha` should point to the latest commit from the release branch.
 1. Compare the generated output to the new commits for the release to check if
    any notable change missed a release note.
 1. Reword release notes as needed. Make sure to check notes for breaking
