@@ -1,0 +1,44 @@
+# A configuration file for multi-arch image building with the Google cloud build service.
+#
+# Repos using this file must:
+# - import csi-release-tools
+# - add a symlink cloudbuild.yaml -> release-tools/cloudbuild.yaml
+# - add a .cloudbuild.sh which can be a custom file or a symlink
+#   to release-tools/cloudbuild.sh
+# - accept "binary" as build argument in their Dockerfile(s) (see
+#   https://github.com/pohly/node-driver-registrar/blob/3018101987b0bb6da2a2657de607174d6e3728f7/Dockerfile#L4-L6)
+#   because binaries will get built for different architectures and then
+#   get copied from the built host into the container image
+#
+# See https://github.com/kubernetes/test-infra/blob/master/config/jobs/image-pushing/README.md
+# for more details on image pushing process in Kubernetes.
+
+# This must be specified in seconds. If omitted, defaults to 600s (10 mins).
+timeout: 1200s
+# This prevents errors if you don't use both _GIT_TAG and _PULL_BASE_REF,
+# or any new substitutions added in the future.
+options:
+  substitution_option: ALLOW_LOOSE
+steps:
+  # The image must contain bash and curl. Ideally it should also contain
+  # the desired version of Go (currently defined in release-tools/travis.yml),
+  # but that just speeds up the build and is not required.
+  - name: 'gcr.io/k8s-testimages/gcb-docker-gcloud:v20200421-a2bf5f8'
+    entrypoint: ./.cloudbuild.sh
+    env:
+    - GIT_TAG=${_GIT_TAG}
+    - PULL_BASE_REF=${_PULL_BASE_REF}
+    - REGISTRY_NAME=gcr.io/${_STAGING_PROJECT}
+    - HOME=/root
+substitutions:
+  # _GIT_TAG will be filled with a git-based tag for the image, of the form vYYYYMMDD-hash, and
+  # can be used as a substitution.
+  _GIT_TAG: '12345'
+  # _PULL_BASE_REF will contain the ref that was pushed to trigger this build -
+  # a branch like 'master' or 'release-0.2', or a tag like 'v0.2'.
+  _PULL_BASE_REF: 'master'
+  # The default gcr.io staging project for Kubernetes-CSI
+  # (=> https://console.cloud.google.com/gcr/images/k8s-staging-csi/GLOBAL).
+  # Might be overridden in the Prow build job for a repo which wants
+  # images elsewhere.
+  _STAGING_PROJECT: 'k8s-staging-csi'
