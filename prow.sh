@@ -1189,3 +1189,17 @@ main () {
 
     return "$ret"
 }
+
+# This function can be called by a repo's top-level cloudbuild.sh:
+# it handles environment set up in the GCR cloud build and then
+# invokes "make push-multiarch" to do the actual image building.
+gcr_cloud_build () {
+    # Register gcloud as a Docker credential helper.
+    # Required for "docker buildx build --push".
+    gcloud auth configure-docker
+
+    # Extract tag-n-hash value from GIT_TAG (form vYYYYMMDD-tag-n-hash) for REV value.
+    REV=v$(echo "$GIT_TAG" | cut -f3- -d 'v')
+
+    run_with_go "${CSI_PROW_GO_VERSION_BUILD}" make push-multiarch REV="${REV}" REGISTRY_NAME="${REGISTRY_NAME}" BUILD_PLATFORMS="${CSI_PROW_BUILD_PLATFORMS}"
+}
