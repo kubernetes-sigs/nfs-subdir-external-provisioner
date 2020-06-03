@@ -117,6 +117,10 @@ DOCKER_BUILDX_CREATE_ARGS ?=
 # Docker Buildx is included in Docker 19.03.
 #
 # ./cmd/<command>/Dockerfile[.Windows] is used if found, otherwise Dockerfile[.Windows].
+# It is currently optional: if no such file exists, Windows images are not included,
+# even when Windows is listed in BUILD_PLATFORMS. That way, projects can test that
+# Windows binaries can be built before adding a Dockerfile for it.
+#
 # BUILD_PLATFORMS determines which individual images are included in the multiarch image.
 # PULL_BASE_REF must be set to 'master', 'release-x.y', or a tag name, and determines
 # the tag for the resulting multiarch image.
@@ -129,6 +133,9 @@ $(CMDS:%=push-multiarch-%): push-multiarch-%: check-pull-base-ref build-%
 	dockerfile_linux=$$(if [ -e ./cmd/$*/Dockerfile ]; then echo ./cmd/$*/Dockerfile; else echo Dockerfile; fi); \
 	dockerfile_windows=$$(if [ -e ./cmd/$*/Dockerfile.Windows ]; then echo ./cmd/$*/Dockerfile.Windows; else echo Dockerfile.Windows; fi); \
 	if [ '$(BUILD_PLATFORMS)' ]; then build_platforms='$(BUILD_PLATFORMS)'; else build_platforms="linux amd64"; fi; \
+	if ! [ -f "$$dockerfile_windows" ]; then \
+		build_platforms="$$(echo "$$build_platforms" | sed -e 's/windows *[^ ]* *.exe//g' -e 's/; *;/;/g')"; \
+	fi; \
 	pushMultiArch () { \
 		tag=$$1; \
 		echo "$$build_platforms" | tr ';' '\n' | while read -r os arch suffix; do \
