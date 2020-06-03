@@ -71,7 +71,7 @@ BUILD_PLATFORMS =
 
 # This builds each command (= the sub-directories of ./cmd) for the target platform(s)
 # defined by BUILD_PLATFORMS.
-build-%: check-go-version-go
+$(CMDS:%=build-%): build-%: check-go-version-go
 	mkdir -p bin
 	echo '$(BUILD_PLATFORMS)' | tr ';' '\n' | while read -r os arch suffix; do \
 		if ! (set -x; CGO_ENABLED=0 GOOS="$$os" GOARCH="$$arch" go build $(GOFLAGS_VENDOR) -a -ldflags '-X main.version=$(REV) -extldflags "-static"' -o "./bin/$*$$suffix" ./cmd/$*); then \
@@ -80,10 +80,10 @@ build-%: check-go-version-go
 		fi; \
 	done
 
-container-%: build-%
+$(CMDS:%=container-%): container-%: build-%
 	docker build -t $*:latest -f $(shell if [ -e ./cmd/$*/Dockerfile ]; then echo ./cmd/$*/Dockerfile; else echo Dockerfile; fi) --label revision=$(REV) .
 
-push-%: container-%
+$(CMDS:%=push-%): push-%: container-%
 	set -ex; \
 	push_image () { \
 		docker tag $*:latest $(IMAGE_NAME):$$tag; \
@@ -120,7 +120,7 @@ DOCKER_BUILDX_CREATE_ARGS ?=
 # BUILD_PLATFORMS determines which individual images are included in the multiarch image.
 # PULL_BASE_REF must be set to 'master', 'release-x.y', or a tag name, and determines
 # the tag for the resulting multiarch image.
-push-multiarch-%: check-pull-base-ref build-%
+$(CMDS:%=push-multiarch-%): push-multiarch-%: check-pull-base-ref build-%
 	set -ex; \
 	DOCKER_CLI_EXPERIMENTAL=enabled; \
 	export DOCKER_CLI_EXPERIMENTAL; \
