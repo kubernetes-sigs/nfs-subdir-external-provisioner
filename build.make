@@ -166,6 +166,7 @@ check-pull-base-ref:
 		exit 1; \
 	fi
 
+.PHONY: push-multiarch
 push-multiarch: $(CMDS:%=push-multiarch-%)
 
 clean:
