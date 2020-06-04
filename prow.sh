@@ -1198,6 +1198,12 @@ gcr_cloud_build () {
     # Required for "docker buildx build --push".
     gcloud auth configure-docker
 
+    if find . -name Dockerfile | grep -v ^./vendor | xargs --no-run-if-empty cat | grep -q ^RUN; then
+        # Needed for "RUN" steps on non-linux/amd64 platforms.
+        # See https://github.com/multiarch/qemu-user-static#getting-started
+        (set -x; docker run --rm --privileged multiarch/qemu-user-static --reset -p yes)
+    fi
+
     # Extract tag-n-hash value from GIT_TAG (form vYYYYMMDD-tag-n-hash) for REV value.
     REV=v$(echo "$GIT_TAG" | cut -f3- -d 'v')
 
