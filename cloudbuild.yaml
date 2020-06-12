@@ -12,6 +12,8 @@
 #
 # See https://github.com/kubernetes/test-infra/blob/master/config/jobs/image-pushing/README.md
 # for more details on image pushing process in Kubernetes.
+#
+# To promote release images, see https://github.com/kubernetes/k8s.io/tree/master/k8s.gcr.io/images/k8s-staging-sig-storage.
 
 # This must be specified in seconds. If omitted, defaults to 600s (10 mins).
 timeout: 1200s
@@ -38,7 +40,7 @@ substitutions:
   # a branch like 'master' or 'release-0.2', or a tag like 'v0.2'.
   _PULL_BASE_REF: 'master'
   # The default gcr.io staging project for Kubernetes-CSI
-  # (=> https://console.cloud.google.com/gcr/images/k8s-staging-csi/GLOBAL).
+  # (=> https://console.cloud.google.com/gcr/images/k8s-staging-sig-storage/GLOBAL).
   # Might be overridden in the Prow build job for a repo which wants
   # images elsewhere.
-  _STAGING_PROJECT: 'k8s-staging-csi'
+  _STAGING_PROJECT: 'k8s-staging-sig-storage'
