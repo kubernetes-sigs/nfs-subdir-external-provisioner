@@ -18,7 +18,7 @@ limitations under the License.
 This command filters a JUnit file such that only tests with a name
 matching a regular expression are passed through. By concatenating
 multiple input files it is possible to merge them into a single file.
- */
+*/
 package main
 
 import (
