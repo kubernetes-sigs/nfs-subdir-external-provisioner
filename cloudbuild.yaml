@@ -16,7 +16,7 @@
 # To promote release images, see https://github.com/kubernetes/k8s.io/tree/master/k8s.gcr.io/images/k8s-staging-sig-storage.
 
 # This must be specified in seconds. If omitted, defaults to 600s (10 mins).
-timeout: 1200s
+timeout: 1800s
 # This prevents errors if you don't use both _GIT_TAG and _PULL_BASE_REF,
 # or any new substitutions added in the future.
 options:
