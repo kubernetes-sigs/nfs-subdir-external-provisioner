@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine:3.6
+FROM alpine:3.11
 RUN apk update --no-cache && apk add ca-certificates
 COPY nfs-subdir-external-provisioner /nfs-subdir-external-provisioner
 ENTRYPOINT ["/nfs-subdir-external-provisioner"]
