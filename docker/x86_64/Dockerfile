@@ -14,5 +14,5 @@
 
 FROM alpine:3.6
 RUN apk update --no-cache && apk add ca-certificates
-COPY nfs-client-provisioner /nfs-client-provisioner
-ENTRYPOINT ["/nfs-client-provisioner"]
+COPY nfs-subdir-external-provisioner /nfs-subdir-external-provisioner
+ENTRYPOINT ["/nfs-subdir-external-provisioner"]
