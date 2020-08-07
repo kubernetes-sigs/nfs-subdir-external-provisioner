@@ -86,6 +86,12 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
    [external-provisioner example](https://github.com/kubernetes-csi/external-provisioner/releases/new)
 1. If release was a new major/minor version, create a new `release-<minor>`
    branch at that commit.
+1. Check [image build status](https://k8s-testgrid.appspot.com/sig-storage-image-build).
+1. Promote images from k8s-staging-sig-storage to k8s.gcr.io/sig-storage. From
+   the [k8s image
+   repo](https://github.com/kubernetes/k8s.io/tree/master/k8s.gcr.io/images/k8s-staging-sig-storage),
+   run `./generate.sh > images.yaml`, and send a PR with the updated images.
+   Once merged, the image promoter will copy the images from staging to prod.
 1. Update [kubernetes-csi/docs](https://github.com/kubernetes-csi/docs) sidecar
    and feature pages with the new released version.
 1. After all the sidecars have been released, update
