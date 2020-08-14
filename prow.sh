@@ -513,6 +513,10 @@ go_version_for_kubernetes () (
     if ! [ "$go_version" ]; then
         die "Unable to determine Go version for Kubernetes $version from hack/lib/golang.sh."
     fi
+    # Strip the trailing .0. Kubernetes includes it, Go itself doesn't.
+    # Ignore: See if you can use ${variable//search/replace} instead.
+    # shellcheck disable=SC2001
+    go_version="$(echo "$go_version" | sed -e 's/\.0$//')"
     echo "$go_version"
 )
 
