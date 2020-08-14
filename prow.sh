@@ -218,17 +218,18 @@ configvar CSI_PROW_DRIVER_CANARY "${CSI_PROW_HOSTPATH_CANARY}" "driver image ove
 # all generated files are present.
 #
 # CSI_PROW_E2E_REPO=none disables E2E testing.
-# TOOO: remove versioned variables and make e2e version match k8s version
-configvar CSI_PROW_E2E_VERSION_1_15 v1.15.0 "E2E version for Kubernetes 1.15.x"
-configvar CSI_PROW_E2E_VERSION_1_16 v1.16.0 "E2E version for Kubernetes 1.16.x"
-configvar CSI_PROW_E2E_VERSION_1_17 v1.17.0 "E2E version for Kubernetes 1.17.x"
-# TODO: add new CSI_PROW_E2E_VERSION entry for future Kubernetes releases
-configvar CSI_PROW_E2E_VERSION_LATEST master "E2E version for Kubernetes master" # testing against Kubernetes master is already tracking a moving target, so we might as well use a moving E2E version
-configvar CSI_PROW_E2E_REPO_LATEST https://github.com/kubernetes/kubernetes "E2E repo for Kubernetes >= 1.13.x" # currently the same for all versions
-configvar CSI_PROW_E2E_IMPORT_PATH_LATEST k8s.io/kubernetes "E2E package for Kubernetes >= 1.13.x" # currently the same for all versions
-configvar CSI_PROW_E2E_VERSION "$(get_versioned_variable CSI_PROW_E2E_VERSION "${csi_prow_kubernetes_version_suffix}")"  "E2E version"
-configvar CSI_PROW_E2E_REPO "$(get_versioned_variable CSI_PROW_E2E_REPO "${csi_prow_kubernetes_version_suffix}")" "E2E repo"
-configvar CSI_PROW_E2E_IMPORT_PATH "$(get_versioned_variable CSI_PROW_E2E_IMPORT_PATH "${csi_prow_kubernetes_version_suffix}")" "E2E package"
+tag_from_version () {
+    version="$1"
+    shift
+    case "$version" in
+        latest) echo "master";;
+        release-*) echo "$version";;
+        *) echo "v$version";;
+    esac
+}
+configvar CSI_PROW_E2E_VERSION "$(tag_from_version "${CSI_PROW_KUBERNETES_VERSION}")"  "E2E version"
+configvar CSI_PROW_E2E_REPO "https://github.com/kubernetes/kubernetes" "E2E repo"
+configvar CSI_PROW_E2E_IMPORT_PATH "k8s.io/kubernetes" "E2E package"
 
 # csi-sanity testing from the csi-test repo can be run against the installed
 # CSI driver. For this to work, deploying the driver must expose the Unix domain
@@ -513,6 +514,10 @@ go_version_for_kubernetes () (
     if ! [ "$go_version" ]; then
         die "Unable to determine Go version for Kubernetes $version from hack/lib/golang.sh."
     fi
+    # Strip the trailing .0. Kubernetes includes it, Go itself doesn't.
+    # Ignore: See if you can use ${variable//search/replace} instead.
+    # shellcheck disable=SC2001
+    go_version="$(echo "$go_version" | sed -e 's/\.0$//')"
     echo "$go_version"
 )
 
