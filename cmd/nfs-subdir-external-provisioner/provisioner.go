@@ -22,14 +22,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
+	"regexp"
 	"strings"
 
 	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 
 	"github.com/golang/glog"
-	"sigs.k8s.io/sig-storage-lib-external-provisioner/controller"
-	"k8s.io/api/core/v1"
+	"github.com/kubernetes-sigs/sig-storage-lib-external-provisioner/controller"
+	v1 "k8s.io/api/core/v1"
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -47,13 +47,36 @@ type nfsProvisioner struct {
 	path   string
 }
 
+type pvcMetadata struct {
+	data        map[string]string
+	labels      map[string]string
+	annotations map[string]string
+}
+
+func (meta *pvcMetadata) stringParser(str string) string {
+	pattern := regexp.MustCompile(`{pvc\.((labels|annotations)\.(.*?)|.*?)}`)
+	result := pattern.FindAllStringSubmatch(str, -1)
+	for _, r := range result {
+		switch r[2] {
+		case "labels":
+			str = strings.Replace(str, r[0], meta.labels[r[3]], -1)
+		case "annotations":
+			fmt.Println(r[0], r[3], meta.annotations[r[3]])
+			str = strings.Replace(str, r[0], meta.annotations[r[3]], -1)
+		default:
+			str = strings.Replace(str, r[0], meta.data[r[1]], -1)
+		}
+	}
+	return str
+}
+
 const (
 	mountPath = "/persistentvolumes"
 )
 
 var _ controller.Provisioner = &nfsProvisioner{}
 
-func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.PersistentVolume, error) {
+func (p *nfsProvisioner) Provision(options controller.VolumeOptions) (*v1.PersistentVolume, error) {
 	if options.PVC.Spec.Selector != nil {
 		return nil, fmt.Errorf("claim Selector is not supported")
 	}
@@ -64,23 +87,39 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 
 	pvName := strings.Join([]string{pvcNamespace, pvcName, options.PVName}, "-")
 
+	metadata := &pvcMetadata{
+		data: map[string]string{
+			"name":      pvcName,
+			"namespace": pvcNamespace,
+		},
+		labels:      options.PVC.Labels,
+		annotations: options.PVC.Annotations,
+	}
+
 	fullPath := filepath.Join(mountPath, pvName)
+	path := filepath.Join(p.path, pvName)
+
+	pathPattern, exists := options.Parameters["pathPattern"]
+	if exists {
+		customPath := metadata.stringParser(pathPattern)
+		path = filepath.Join(p.path, customPath)
+		fullPath = filepath.Join(mountPath, customPath)
+	}
+
 	glog.V(4).Infof("creating path %s", fullPath)
 	if err := os.MkdirAll(fullPath, 0777); err != nil {
 		return nil, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
 	os.Chmod(fullPath, 0777)
 
-	path := filepath.Join(p.path, pvName)
-
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: options.PVName,
 		},
 		Spec: v1.PersistentVolumeSpec{
-			PersistentVolumeReclaimPolicy: *options.StorageClass.ReclaimPolicy,
+			PersistentVolumeReclaimPolicy: options.PersistentVolumeReclaimPolicy,
 			AccessModes:                   options.PVC.Spec.AccessModes,
-			//MountOptions:                  options.MountOptions,
+			MountOptions:                  options.MountOptions,
 			Capacity: v1.ResourceList{
 				v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
 			},
@@ -98,8 +137,9 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 
 func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
-	pvName := filepath.Base(path)
-	oldPath := filepath.Join(mountPath, pvName)
+	relativePath := strings.Replace(path, p.path, "", 1)
+	oldPath := filepath.Join(mountPath, relativePath)
+
 	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
 		glog.Warningf("path %s does not exist, deletion skipped", oldPath)
 		return nil
@@ -112,21 +152,20 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	// Determine if the "archiveOnDelete" parameter exists.
 	// If it exists and has a false value, delete the directory.
 	// Otherwise, archive it.
-	archiveOnDelete, exists := storageClass.Parameters["archiveOnDelete"]
-	if exists {
-		archiveBool, err := strconv.ParseBool(archiveOnDelete)
-		if err != nil {
-			return err
-		}
-		if !archiveBool {
-			return os.RemoveAll(oldPath)
-		}
+	onDelete := storageClass.Parameters["onDelete"]
+	switch onDelete {
+
+	case "delete":
+		return os.RemoveAll(oldPath)
+
+	case "retain":
+		return nil
+
+	default:
+		archivePath := filepath.Join(mountPath, "archived-"+volume.Name)
+		glog.V(4).Infof("archiving path %s to %s", oldPath, archivePath)
+		return os.Rename(oldPath, archivePath)
 	}
-
-	archivePath := filepath.Join(mountPath, "archived-"+pvName)
-	glog.V(4).Infof("archiving path %s to %s", oldPath, archivePath)
-	return os.Rename(oldPath, archivePath)
-
 }
 
 // getClassForVolume returns StorageClass
