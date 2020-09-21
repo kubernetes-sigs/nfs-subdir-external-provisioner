@@ -53,15 +53,15 @@ type pvcMetadata struct {
 	annotations map[string]string
 }
 
+var pattern = regexp.MustCompile(`{pvc\.((labels|annotations)\.(.*?)|.*?)}`)
+
 func (meta *pvcMetadata) stringParser(str string) string {
-	pattern := regexp.MustCompile(`{pvc\.((labels|annotations)\.(.*?)|.*?)}`)
 	result := pattern.FindAllStringSubmatch(str, -1)
 	for _, r := range result {
 		switch r[2] {
 		case "labels":
 			str = strings.Replace(str, r[0], meta.labels[r[3]], -1)
 		case "annotations":
-			fmt.Println(r[0], r[3], meta.annotations[r[3]])
 			str = strings.Replace(str, r[0], meta.annotations[r[3]], -1)
 		default:
 			str = strings.Replace(str, r[0], meta.data[r[1]], -1)
