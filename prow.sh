@@ -211,6 +211,10 @@ configvar CSI_PROW_DRIVER_INSTALL "install_csi_driver" "name of the shell functi
 # still use that name.
 configvar CSI_PROW_DRIVER_CANARY "${CSI_PROW_HOSTPATH_CANARY}" "driver image override for canary images"
 
+# Image registry to use for canary images.
+# Only valid if CSI_PROW_DRIVER_CANARY is set.
+configvar CSI_PROW_DRIVER_CANARY_REGISTRY "gcr.io/k8s-staging-sig-storage" "registry for canary images"
+
 # The E2E testing can come from an arbitrary repo. The expectation is that
 # the repo supports "go test ./test/e2e -args --storage.testdriver" (https://github.com/kubernetes/kubernetes/pull/72836)
 # after setting KUBECONFIG. As a special case, if the repository is Kubernetes,
@@ -693,7 +697,7 @@ install_csi_driver () {
     fi
 
     if [ "${CSI_PROW_DRIVER_CANARY}" != "stable" ]; then
-        images="$images IMAGE_TAG=${CSI_PROW_DRIVER_CANARY}"
+        images="$images IMAGE_TAG=${CSI_PROW_DRIVER_CANARY} IMAGE_REGISTRY=${CSI_PROW_DRIVER_CANARY_REGISTRY}"
     fi
     # Ignore: Double quote to prevent globbing and word splitting.
     # It's intentional here for $images.
