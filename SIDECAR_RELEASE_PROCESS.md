@@ -39,10 +39,11 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 1. Changes can then be updated in all the sidecar repos and hostpath driver repo
    by following the [update
    instructions](https://github.com/kubernetes-csi/csi-release-tools/blob/master/README.md#sharing-and-updating).
-1. New pull and CI jobs are configured by
+1. New pull and CI jobs are configured by adding new K8s versions to the top of
    [gen-jobs.sh](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-csi/gen-jobs.sh).
-   New pull jobs that have been unverified should be initially made optional.
-   [Example](https://github.com/kubernetes/test-infra/pull/15055)
+   New pull jobs that have been unverified should be initially made optional by
+   setting the new K8s version as
+   [experimental](https://github.com/kubernetes/test-infra/blob/a1858f46d6014480b130789df58b230a49203a64/config/jobs/kubernetes-csi/gen-jobs.sh#L40).
 1. Once new pull and CI jobs have been verified, and the new Kubernetes version
    is released, we can make the optional jobs required, and also remove the
    Kubernetes versions that are no longer supported.
