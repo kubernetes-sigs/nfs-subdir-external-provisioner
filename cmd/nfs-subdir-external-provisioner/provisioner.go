@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
@@ -52,7 +53,7 @@ type pvcMetadata struct {
 	annotations map[string]string
 }
 
-var pattern = regexp.MustCompile(`{pvc\.((labels|annotations)\.(.*?)|.*?)}`)
+var pattern = regexp.MustCompile(`\${\.PVC\.((labels|annotations)\.(.*?)|.*?)}`)
 
 func (meta *pvcMetadata) stringParser(str string) string {
 	result := pattern.FindAllStringSubmatch(str, -1)
@@ -148,9 +149,10 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	if err != nil {
 		return err
 	}
-	// Determine if the "archiveOnDelete" parameter exists.
-	// If it exists and has a false value, delete the directory.
-	// Otherwise, archive it.
+
+	// Determine if the "onDelete" parameter exists.
+	// If it exists and has a delete value, delete the directory.
+	// If it exists and has a retain value, safe the directory.
 	onDelete := storageClass.Parameters["onDelete"]
 	switch onDelete {
 
@@ -159,12 +161,27 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 
 	case "retain":
 		return nil
-
-	default:
-		archivePath := filepath.Join(mountPath, "archived-"+volume.Name)
-		glog.V(4).Infof("archiving path %s to %s", oldPath, archivePath)
-		return os.Rename(oldPath, archivePath)
 	}
+
+	// Determine if the "archiveOnDelete" parameter exists.
+	// If it exists and has a false value, delete the directory.
+	// Otherwise, archive it.
+	archiveOnDelete, exists := storageClass.Parameters["archiveOnDelete"]
+	if exists {
+		if exists {
+			archiveBool, err := strconv.ParseBool(archiveOnDelete)
+			if err != nil {
+				return err
+			}
+			if !archiveBool {
+				return os.RemoveAll(oldPath)
+			}
+		}
+	}
+
+	archivePath := filepath.Join(mountPath, "archived-"+volume.Name)
+	glog.V(4).Infof("archiving path %s to %s", oldPath, archivePath)
+	return os.Rename(oldPath, archivePath)
 }
 
 // getClassForVolume returns StorageClass

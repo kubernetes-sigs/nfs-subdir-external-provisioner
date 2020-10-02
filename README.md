@@ -107,6 +107,17 @@ spec:
 
 You may also want to change the PROVISIONER_NAME above from ``fuseim.pri/ifs`` to something more descriptive like ``nfs-storage``, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below:
 
+**Step 5: Deploying your storage class**
+
+***Paraments:***
+
+| Name | Description |  Default |
+|------|-------------|:--------:|
+| onDelete | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory. | will be archived with name on the share: `archived-+volume.Name` |
+| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists will be ignored. | will be archived with name on the share: `archived-+volume.Name` |
+| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists will be ignored. | will be archived with name on the share: `archived-+volume.Name` |
+| pathPattern | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.}`: `${PVC.namespace}`|  n/a |
+
 This is `deploy/class.yaml` which defines the NFS-Client's Kubernetes Storage Class:
 
 ```yaml
@@ -116,11 +127,11 @@ metadata:
   name: managed-nfs-storage
 provisioner: fuseim.pri/ifs # or choose another name, must match deployment's env PROVISIONER_NAME'
 parameters:
-  archiveOnDelete: "false" # When set to "false" your PVs will not be archived
-                           # by the provisioner upon deletion of the PVC.
+  pathPattern: "${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}" # waits for nfs.io/storage-path annotation, if not specified will accept as empty string.
+  onDelete: delete   
 ```
 
-**Step 5: Finally, test your environment!**
+**Step 6: Finally, test your environment!**
 
 Now we'll test your NFS provisioner.
 
@@ -138,7 +149,7 @@ kubectl delete -f deploy/test-pod.yaml -f deploy/test-claim.yaml
 
 Now check the folder has been deleted.
 
-**Step 6: Deploying your own PersistentVolumeClaims**. To deploy your own PVC, make sure that you have the correct `storage-class` as indicated by your `deploy/class.yaml` file.
+**Step 7: Deploying your own PersistentVolumeClaims**. To deploy your own PVC, make sure that you have the correct `storage-class` as indicated by your `deploy/class.yaml` file.
 
 For example:
 
@@ -149,6 +160,7 @@ metadata:
   name: test-claim
   annotations:
     volume.beta.kubernetes.io/storage-class: "managed-nfs-storage"
+    nfs.io/storage-path: "test-path" # not required, depending on whether this annotation was shown in the storage class description
 spec:
   accessModes:
     - ReadWriteMany
