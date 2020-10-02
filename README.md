@@ -114,8 +114,7 @@ You may also want to change the PROVISIONER_NAME above from ``fuseim.pri/ifs`` t
 | Name | Description |  Default |
 |------|-------------|:--------:|
 | onDelete | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory. | will be archived with name on the share: `archived-+volume.Name` |
-| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists will be ignored. | will be archived with name on the share: `archived-+volume.Name` |
-| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists will be ignored. | will be archived with name on the share: `archived-+volume.Name` |
+| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored. | will be archived with name on the share: `archived-+volume.Name` |
 | pathPattern | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.}`: `${PVC.namespace}`|  n/a |
 
 This is `deploy/class.yaml` which defines the NFS-Client's Kubernetes Storage Class:
