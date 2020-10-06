@@ -212,7 +212,7 @@ configvar CSI_PROW_DRIVER_INSTALL "install_csi_driver" "name of the shell functi
 configvar CSI_PROW_DRIVER_CANARY "${CSI_PROW_HOSTPATH_CANARY}" "driver image override for canary images"
 
 # Image registry to use for canary images.
-# Only valid if CSI_PROW_DRIVER_CANARY is set.
+# Only valid if CSI_PROW_DRIVER_CANARY == "canary".
 configvar CSI_PROW_DRIVER_CANARY_REGISTRY "gcr.io/k8s-staging-sig-storage" "registry for canary images"
 
 # The E2E testing can come from an arbitrary repo. The expectation is that
@@ -697,7 +697,11 @@ install_csi_driver () {
     fi
 
     if [ "${CSI_PROW_DRIVER_CANARY}" != "stable" ]; then
+      if [ "${CSI_PROW_DRIVER_CANARY}" == "canary" ]; then
         images="$images IMAGE_TAG=${CSI_PROW_DRIVER_CANARY} IMAGE_REGISTRY=${CSI_PROW_DRIVER_CANARY_REGISTRY}"
+      else
+        images="$images IMAGE_TAG=${CSI_PROW_DRIVER_CANARY}"
+      fi
     fi
     # Ignore: Double quote to prevent globbing and word splitting.
     # It's intentional here for $images.
