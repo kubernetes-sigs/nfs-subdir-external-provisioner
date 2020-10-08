@@ -109,7 +109,7 @@ You may also want to change the PROVISIONER_NAME above from ``fuseim.pri/ifs`` t
 
 **Step 5: Deploying your storage class**
 
-***Paraments:***
+***paraments:***
 
 | Name | Description |  Default |
 |------|-------------|:--------:|

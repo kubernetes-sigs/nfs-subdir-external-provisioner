@@ -168,14 +168,12 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	// Otherwise, archive it.
 	archiveOnDelete, exists := storageClass.Parameters["archiveOnDelete"]
 	if exists {
-		if exists {
-			archiveBool, err := strconv.ParseBool(archiveOnDelete)
-			if err != nil {
-				return err
-			}
-			if !archiveBool {
-				return os.RemoveAll(oldPath)
-			}
+		archiveBool, err := strconv.ParseBool(archiveOnDelete)
+		if err != nil {
+			return err
+		}
+		if !archiveBool {
+			return os.RemoveAll(oldPath)
 		}
 	}
 
