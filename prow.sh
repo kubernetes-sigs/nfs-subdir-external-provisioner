@@ -298,11 +298,7 @@ tests_need_alpha_cluster () {
 
 # Regex for non-alpha, feature-tagged tests that should be run.
 #
-# Starting with 1.17, snapshots is beta, but the E2E tests still have the
-# [Feature:] tag. They need to be explicitly enabled.
-configvar CSI_PROW_E2E_FOCUS_1_15 '^' "non-alpha, feature-tagged tests for Kubernetes = 1.15" # no tests to run, match nothing
-configvar CSI_PROW_E2E_FOCUS_1_16 '^' "non-alpha, feature-tagged tests for Kubernetes = 1.16" # no tests to run, match nothing
-configvar CSI_PROW_E2E_FOCUS_LATEST '\[Feature:VolumeSnapshotDataSource\]' "non-alpha, feature-tagged tests for Kubernetes >= 1.17"
+configvar CSI_PROW_E2E_FOCUS_LATEST '\[Feature:VolumeSnapshotDataSource\]' "non-alpha, feature-tagged tests for latest Kubernetes version"
 configvar CSI_PROW_E2E_FOCUS "$(get_versioned_variable CSI_PROW_E2E_FOCUS "${csi_prow_kubernetes_version_suffix}")" "non-alpha, feature-tagged tests"
 
 # Serial vs. parallel is always determined by these regular expressions.
@@ -324,7 +320,7 @@ regex_join () {
 # alpha in previous Kubernetes releases. This was considered too
 # error prone. Therefore we use E2E tests that match the Kubernetes
 # version that is getting tested.
-configvar CSI_PROW_E2E_ALPHA_LATEST '\[Feature:' "alpha tests for Kubernetes >= 1.14" # there's no need to update this, adding a new case for CSI_PROW_E2E for a new Kubernetes is enough
+configvar CSI_PROW_E2E_ALPHA_LATEST '\[Feature:' "alpha tests for latest Kubernetes version" # there's no need to update this, adding a new case for CSI_PROW_E2E for a new Kubernetes is enough
 configvar CSI_PROW_E2E_ALPHA "$(get_versioned_variable CSI_PROW_E2E_ALPHA "${csi_prow_kubernetes_version_suffix}")" "alpha tests"
 
 # After the parallel E2E test without alpha features, a test cluster
@@ -339,15 +335,13 @@ configvar CSI_PROW_E2E_ALPHA "$(get_versioned_variable CSI_PROW_E2E_ALPHA "${csi
 # kubernetes-csi components must be updated, either by disabling
 # the failing test for "latest" or by updating the test and not running
 # it anymore for older releases.
-configvar CSI_PROW_E2E_ALPHA_GATES_1_15 'VolumeSnapshotDataSource=true,ExpandCSIVolumes=true' "alpha feature gates for Kubernetes 1.15"
-configvar CSI_PROW_E2E_ALPHA_GATES_1_16 'VolumeSnapshotDataSource=true' "alpha feature gates for Kubernetes 1.16"
 # TODO: add new CSI_PROW_ALPHA_GATES_xxx entry for future Kubernetes releases and
 # add new gates to CSI_PROW_E2E_ALPHA_GATES_LATEST.
 configvar CSI_PROW_E2E_ALPHA_GATES_LATEST '' "alpha feature gates for latest Kubernetes"
 configvar CSI_PROW_E2E_ALPHA_GATES "$(get_versioned_variable CSI_PROW_E2E_ALPHA_GATES "${csi_prow_kubernetes_version_suffix}")" "alpha E2E feature gates"
 
 # Which external-snapshotter tag to use for the snapshotter CRD and snapshot-controller deployment
-configvar CSI_SNAPSHOTTER_VERSION 'v2.0.1' "external-snapshotter version tag"
+configvar CSI_SNAPSHOTTER_VERSION 'v3.0.0' "external-snapshotter version tag"
 
 # Some tests are known to be unusable in a KinD cluster. For example,
 # stopping kubelet with "ssh <node IP> systemctl stop kubelet" simply
@@ -718,7 +712,7 @@ install_csi_driver () {
 # Installs all nessesary snapshotter CRDs  
 install_snapshot_crds() {
   # Wait until volumesnapshot CRDs are in place.
-  CRD_BASE_DIR="https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/config/crd"
+  CRD_BASE_DIR="https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/client/config/crd"
   kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshotclasses.yaml" --validate=false
   kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshots.yaml" --validate=false
   kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshotcontents.yaml" --validate=false
@@ -1101,14 +1095,8 @@ main () {
             start_cluster || die "starting the non-alpha cluster failed"
 
             # Install necessary snapshot CRDs and snapshot controller
-            # For Kubernetes 1.17+, we will install the CRDs and snapshot controller.
-            if version_gt "${CSI_PROW_KUBERNETES_VERSION}" "1.16.255" || "${CSI_PROW_KUBERNETES_VERSION}" == "latest"; then
-                info "Version ${CSI_PROW_KUBERNETES_VERSION}, installing CRDs and snapshot controller"
-                install_snapshot_crds
-                install_snapshot_controller
-            else
-                info "Version ${CSI_PROW_KUBERNETES_VERSION}, skipping CRDs and snapshot controller"
-            fi
+            install_snapshot_crds
+            install_snapshot_controller
 
             # Installing the driver might be disabled.
             if ${CSI_PROW_DRIVER_INSTALL} "$images"; then
@@ -1158,14 +1146,8 @@ main () {
             start_cluster "${CSI_PROW_E2E_ALPHA_GATES}" || die "starting alpha cluster failed"
 
             # Install necessary snapshot CRDs and snapshot controller
-            # For Kubernetes 1.17+, we will install the CRDs and snapshot controller.
-            if version_gt "${CSI_PROW_KUBERNETES_VERSION}" "1.16.255" || "${CSI_PROW_KUBERNETES_VERSION}" == "latest"; then
-                info "Version ${CSI_PROW_KUBERNETES_VERSION}, installing CRDs and snapshot controller"
-                install_snapshot_crds
-                install_snapshot_controller
-            else
-                info "Version ${CSI_PROW_KUBERNETES_VERSION}, skipping CRDs and snapshot controller"
-            fi
+            install_snapshot_crds
+            install_snapshot_controller
 
             # Installing the driver might be disabled.
             if ${CSI_PROW_DRIVER_INSTALL} "$images"; then
