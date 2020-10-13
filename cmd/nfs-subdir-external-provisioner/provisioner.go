@@ -28,13 +28,14 @@ import (
 	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 
 	"github.com/golang/glog"
-	"sigs.k8s.io/sig-storage-lib-external-provisioner/controller"
 	"k8s.io/api/core/v1"
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/controller"
 )
 
 const (
@@ -161,12 +162,24 @@ func main() {
 	if provisionerName == "" {
 		glog.Fatalf("environment variable %s is not set! Please set it.", provisionerNameKey)
 	}
-
-	// Create an InClusterConfig and use it to create a client for the controller
-	// to use to communicate with Kubernetes
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		glog.Fatalf("Failed to create config: %v", err)
+	kubeconfig := os.Getenv("KUBECONFIG")
+	var config *rest.Config
+	if kubeconfig != "" {
+		// Create an OutOfClusterConfig and use it to create a client for the controller
+		// to use to communicate with Kubernetes
+		var err error
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			glog.Fatalf("Failed to create kubeconfig: %v", err)
+		}
+	} else {
+		// Create an InClusterConfig and use it to create a client for the controller
+		// to use to communicate with Kubernetes
+		var err error
+		config, err = rest.InClusterConfig()
+		if err != nil {
+			glog.Fatalf("Failed to create config: %v", err)
+		}
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
