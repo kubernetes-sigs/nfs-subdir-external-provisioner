@@ -33,9 +33,9 @@
 # The expected environment is:
 # - $GOPATH/src/<import path> for the repository that is to be tested,
 #   with PR branch merged (when testing a PR)
+# - optional: bazel installed (when testing against Kubernetes master),
+#   must be recent enough for Kubernetes master
 # - running on linux-amd64
-# - bazel installed (when testing against Kubernetes master), must be recent
-#   enough for Kubernetes master
 # - kind (https://github.com/kubernetes-sigs/kind) installed
 # - optional: Go already installed
 
@@ -110,6 +110,9 @@ configvar CSI_PROW_GO_VERSION_GINKGO "${CSI_PROW_GO_VERSION_BUILD}" "Go version 
 # the desired version is downloaded from https://github.com/kubernetes-sigs/kind/releases/download/
 # (if available), otherwise it is built from source.
 configvar CSI_PROW_KIND_VERSION "v0.6.0" "kind"
+
+# Use kind node-image --type=bazel by default, but allow to disable that.
+configvar CSI_PROW_USE_BAZEL true "use Bazel during 'kind node-image' invocation"
 
 # ginkgo test runner version to use. If the pre-installed version is
 # different, the desired version is built from source.
@@ -537,10 +540,15 @@ start_cluster () {
             if [ "$version" = "latest" ]; then
                 version=master
             fi
+            if ${CSI_PROW_USE_BAZEL}; then
+                type="bazel"
+            else
+                type="docker"
+            fi
             git_clone_branch https://github.com/kubernetes/kubernetes "${CSI_PROW_WORK}/src/kubernetes" "$version" || die "checking out Kubernetes $version failed"
 
             go_version="$(go_version_for_kubernetes "${CSI_PROW_WORK}/src/kubernetes" "$version")" || die "cannot proceed without knowing Go version for Kubernetes"
-            run_with_go "$go_version" kind build node-image --type bazel --image csiprow/node:latest --kube-root "${CSI_PROW_WORK}/src/kubernetes" || die "'kind build node-image' failed"
+            run_with_go "$go_version" kind build node-image --image csiprow/node:latest --type="$type" --kube-root "${CSI_PROW_WORK}/src/kubernetes" || die "'kind build node-image' failed"
             csi_prow_kind_have_kubernetes=true
         fi
         image="csiprow/node:latest"
