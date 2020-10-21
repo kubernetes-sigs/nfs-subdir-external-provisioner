@@ -20,18 +20,23 @@ ifeq ($(VERSION),)
 endif
 IMAGE = $(REGISTRY)nfs-subdir-external-provisioner:$(VERSION)
 IMAGE_ARM = $(REGISTRY)nfs-subdir-external-provisioner-arm:$(VERSION) 
+IMAGE_ARM64 = $(REGISTRY)nfs-subdir-external-provisioner-arm64:$(VERSION) 
 MUTABLE_IMAGE = $(REGISTRY)nfs-subdir-external-provisioner:latest
 MUTABLE_IMAGE_ARM = $(REGISTRY)nfs-subdir-external-provisioner-arm:latest
+MUTABLE_IMAGE_ARM64 = $(REGISTRY)nfs-subdir-external-provisioner-arm64:latest
 
-all: build image build_arm image_arm 
+all: build image build_arm image_arm build_arm64 image_arm64
 
-container: build image build_arm image_arm
+container: build image build_arm image_arm build_arm64 image_arm64
 
 build:
 	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o docker/x86_64/nfs-subdir-external-provisioner ./cmd/nfs-subdir-external-provisioner
 
 build_arm:
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -a -ldflags '-extldflags "-static"' -o docker/arm/nfs-subdir-external-provisioner ./cmd/nfs-subdir-external-provisioner 
+
+build_arm64:
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -ldflags '-extldflags "-static"' -o docker/arm64/nfs-subdir-external-provisioner ./cmd/nfs-subdir-external-provisioner 
 
 image:
 	docker build -t $(MUTABLE_IMAGE) docker/x86_64
@@ -42,8 +47,15 @@ image_arm:
 	docker build -t $(MUTABLE_IMAGE_ARM) docker/arm
 	docker tag $(MUTABLE_IMAGE_ARM) $(IMAGE_ARM)
 
+image_arm64:
+	docker run --rm --privileged multiarch/qemu-user-static:register --reset
+	docker build -t $(MUTABLE_IMAGE_ARM64) docker/arm64
+	docker tag $(MUTABLE_IMAGE_ARM64) $(IMAGE_ARM64)
+
 push:
 	docker push $(IMAGE)
 	docker push $(MUTABLE_IMAGE)
 	docker push $(IMAGE_ARM)
 	docker push $(MUTABLE_IMAGE_ARM)
+	docker push $(IMAGE_ARM64)
+	docker push $(MUTABLE_IMAGE_ARM64)
