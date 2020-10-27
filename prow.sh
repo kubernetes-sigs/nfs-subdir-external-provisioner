@@ -558,7 +558,8 @@ start_cluster () {
             git_clone_branch https://github.com/kubernetes/kubernetes "${CSI_PROW_WORK}/src/kubernetes" "$version" || die "checking out Kubernetes $version failed"
 
             go_version="$(go_version_for_kubernetes "${CSI_PROW_WORK}/src/kubernetes" "$version")" || die "cannot proceed without knowing Go version for Kubernetes"
-            run_with_go "$go_version" kind build node-image --image csiprow/node:latest --type="$type" --kube-root "${CSI_PROW_WORK}/src/kubernetes" || die "'kind build node-image' failed"
+            # Changing into the Kubernetes source code directory is a workaround for https://github.com/kubernetes-sigs/kind/issues/1910
+            (cd "${CSI_PROW_WORK}/src/kubernetes" && run_with_go "$go_version" kind build node-image --image csiprow/node:latest --type="$type" --kube-root "${CSI_PROW_WORK}/src/kubernetes") || die "'kind build node-image' failed"
             csi_prow_kind_have_kubernetes=true
         fi
         image="csiprow/node:latest"
