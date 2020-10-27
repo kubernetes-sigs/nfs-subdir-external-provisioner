@@ -248,11 +248,16 @@ configvar CSI_PROW_DEP_VERSION v0.5.1 "golang dep version to be used for vendor 
 #
 # Unknown or unsupported entries are ignored.
 #
+# Testing of alpha features is only supported for CSI_PROW_KUBERNETES_VERSION=latest
+# because CSI_PROW_E2E_ALPHA and CSI_PROW_E2E_ALPHA_GATES are not set for
+# older Kubernetes releases. The script supports that, it just isn't done because
+# it is not needed and would cause additional maintenance effort.
+#
 # Sanity testing with csi-sanity only covers the CSI driver itself and
 # thus only makes sense in repos which provide their own CSI
 # driver. Repos can enable sanity testing by setting
 # CSI_PROW_TESTS_SANITY=sanity.
-configvar CSI_PROW_TESTS "unit parallel serial parallel-alpha serial-alpha sanity" "tests to run"
+configvar CSI_PROW_TESTS "unit parallel serial $(if [ "${CSI_PROW_KUBERNETES_VERSION}" = "latest" ]; then echo parallel-alpha serial-alpha; fi) sanity" "tests to run"
 tests_enabled () {
     local t1 t2
     # We want word-splitting here, so ignore: Quote to prevent word splitting, or split robustly with mapfile or read -a.
