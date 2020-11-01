@@ -22,18 +22,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
-	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
-
 	"github.com/golang/glog"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/sig-storage-lib-external-provisioner/controller"
 )
@@ -46,6 +47,29 @@ type nfsProvisioner struct {
 	client kubernetes.Interface
 	server string
 	path   string
+}
+
+type pvcMetadata struct {
+	data        map[string]string
+	labels      map[string]string
+	annotations map[string]string
+}
+
+var pattern = regexp.MustCompile(`\${\.PVC\.((labels|annotations)\.(.*?)|.*?)}`)
+
+func (meta *pvcMetadata) stringParser(str string) string {
+	result := pattern.FindAllStringSubmatch(str, -1)
+	for _, r := range result {
+		switch r[2] {
+		case "labels":
+			str = strings.Replace(str, r[0], meta.labels[r[3]], -1)
+		case "annotations":
+			str = strings.Replace(str, r[0], meta.annotations[r[3]], -1)
+		default:
+			str = strings.Replace(str, r[0], meta.data[r[1]], -1)
+		}
+	}
+	return str
 }
 
 const (
@@ -65,14 +89,30 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 
 	pvName := strings.Join([]string{pvcNamespace, pvcName, options.PVName}, "-")
 
+	metadata := &pvcMetadata{
+		data: map[string]string{
+			"name":      pvcName,
+			"namespace": pvcNamespace,
+		},
+		labels:      options.PVC.Labels,
+		annotations: options.PVC.Annotations,
+	}
+
 	fullPath := filepath.Join(mountPath, pvName)
+	path := filepath.Join(p.path, pvName)
+
+	pathPattern, exists := options.StorageClass.Parameters["pathPattern"]
+	if exists {
+		customPath := metadata.stringParser(pathPattern)
+		path = filepath.Join(p.path, customPath)
+		fullPath = filepath.Join(mountPath, customPath)
+	}
+
 	glog.V(4).Infof("creating path %s", fullPath)
 	if err := os.MkdirAll(fullPath, 0777); err != nil {
 		return nil, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
 	os.Chmod(fullPath, 0777)
-
-	path := filepath.Join(p.path, pvName)
 
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,7 +121,7 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 		Spec: v1.PersistentVolumeSpec{
 			PersistentVolumeReclaimPolicy: *options.StorageClass.ReclaimPolicy,
 			AccessModes:                   options.PVC.Spec.AccessModes,
-			//MountOptions:                  options.MountOptions,
+			// MountOptions:                  options.MountOptions,
 			Capacity: v1.ResourceList{
 				v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
 			},
@@ -99,8 +139,9 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 
 func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
-	pvName := filepath.Base(path)
-	oldPath := filepath.Join(mountPath, pvName)
+	relativePath := strings.Replace(path, p.path, "", 1)
+	oldPath := filepath.Join(mountPath, relativePath)
+
 	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
 		glog.Warningf("path %s does not exist, deletion skipped", oldPath)
 		return nil
@@ -110,6 +151,20 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 	if err != nil {
 		return err
 	}
+
+	// Determine if the "onDelete" parameter exists.
+	// If it exists and has a delete value, delete the directory.
+	// If it exists and has a retain value, safe the directory.
+	onDelete := storageClass.Parameters["onDelete"]
+	switch onDelete {
+
+	case "delete":
+		return os.RemoveAll(oldPath)
+
+	case "retain":
+		return nil
+	}
+
 	// Determine if the "archiveOnDelete" parameter exists.
 	// If it exists and has a false value, delete the directory.
 	// Otherwise, archive it.
@@ -124,10 +179,9 @@ func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
 		}
 	}
 
-	archivePath := filepath.Join(mountPath, "archived-"+pvName)
+	archivePath := filepath.Join(mountPath, "archived-"+volume.Name)
 	glog.V(4).Infof("archiving path %s to %s", oldPath, archivePath)
 	return os.Rename(oldPath, archivePath)
-
 }
 
 // getClassForVolume returns StorageClass
