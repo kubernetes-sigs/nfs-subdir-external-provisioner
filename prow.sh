@@ -331,7 +331,7 @@ configvar CSI_PROW_E2E_ALPHA_GATES "$(get_versioned_variable CSI_PROW_E2E_ALPHA_
 
 # Which external-snapshotter tag to use for the snapshotter CRD and snapshot-controller deployment
 default_csi_snapshotter_version () {
-	if [ "${CSI_PROW_KUBERNETES_VERSION}" = "latest" ] || [ "${CSI_PROW_DRIVER_CANARY}" == "canary" ]; then
+	if [ "${CSI_PROW_KUBERNETES_VERSION}" = "latest" ] || [ "${CSI_PROW_DRIVER_CANARY}" = "canary" ]; then
 		echo "master"
 	else
 		echo "v3.0.2"
