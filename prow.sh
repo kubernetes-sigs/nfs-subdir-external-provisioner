@@ -700,6 +700,10 @@ install_csi_driver () {
 install_snapshot_crds() {
   # Wait until volumesnapshot CRDs are in place.
   CRD_BASE_DIR="https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/client/config/crd"
+  if [[ ${REPO_DIR} == *"external-snapshotter"* ]]; then
+      CRD_BASE_DIR="${REPO_DIR}/client/config/crd"
+  fi
+  echo "Installing snapshot CRDs from ${CRD_BASE_DIR}"
   kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshotclasses.yaml" --validate=false
   kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshots.yaml" --validate=false
   kubectl apply -f "${CRD_BASE_DIR}/snapshot.storage.k8s.io_volumesnapshotcontents.yaml" --validate=false
@@ -719,7 +723,16 @@ install_snapshot_crds() {
 
 # Install snapshot controller and associated RBAC, retrying until the pod is running.
 install_snapshot_controller() {
-  kubectl apply -f "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml"
+  CONTROLLER_DIR="https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}"
+  if [[ ${REPO_DIR} == *"external-snapshotter"* ]]; then
+      CONTROLLER_DIR="${REPO_DIR}"
+  fi
+  SNAPSHOT_RBAC_YAML="${CONTROLLER_DIR}/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml"
+  echo "kubectl apply -f ${SNAPSHOT_RBAC_YAML}"
+  # Ignore: Double quote to prevent globbing and word splitting.
+  # shellcheck disable=SC2086
+  kubectl apply -f ${SNAPSHOT_RBAC_YAML}
+
   cnt=0
   until kubectl get clusterrolebinding snapshot-controller-role; do
      if [ $cnt -gt 30 ]; then
@@ -733,8 +746,60 @@ install_snapshot_controller() {
     sleep 10   
   done
 
+  SNAPSHOT_CONTROLLER_YAML="${CONTROLLER_DIR}/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml"
+  if [[ ${REPO_DIR} == *"external-snapshotter"* ]]; then
+      # snapshot-controller image built from the PR will get a "csiprow" tag.
+      # Load it into the "kind" cluster so that we can deploy it.
+      NEW_TAG="csiprow"
+      NEW_IMG="snapshot-controller:${NEW_TAG}"
+      echo "kind load docker-image --name csi-prow ${NEW_IMG}"
+      kind load docker-image --name csi-prow ${NEW_IMG} || die "could not load the snapshot-controller:csiprow image into the kind cluster"
 
-  kubectl apply -f "https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/${CSI_SNAPSHOTTER_VERSION}/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml"
+      # deploy snapshot-controller
+      echo "Deploying snapshot-controller"
+      # Replace image in SNAPSHOT_CONTROLLER_YAML with snapshot-controller:csiprow and deploy
+      # NOTE: This logic is similar to the logic here:
+      # https://github.com/kubernetes-csi/csi-driver-host-path/blob/v1.4.0/deploy/util/deploy-hostpath.sh#L155
+      # Ignore: Double quote to prevent globbing and word splitting.
+      # shellcheck disable=SC2086
+      # Ignore: Use find instead of ls to better handle non-alphanumeric filenames.
+      # shellcheck disable=SC2012
+      for i in $(ls ${SNAPSHOT_CONTROLLER_YAML} | sort); do
+          echo "   $i"
+          # Ignore: Useless cat. Consider 'cmd < file | ..' or 'cmd file | ..' instead.
+          # shellcheck disable=SC2002
+          # Ignore: See if you can use ${variable//search/replace} instead.
+          # shellcheck disable=SC2001
+          modified="$(cat "$i" | while IFS= read -r line; do
+              nocomments="$(echo "$line" | sed -e 's/ *#.*$//')"
+              if echo "$nocomments" | grep -q '^[[:space:]]*image:[[:space:]]*'; then
+                  # Split 'image: k8s.gcr.io/sig-storage/snapshot-controller:v3.0.0'
+                  # into image (snapshot-controller:v3.0.0),
+                  # name (snapshot-controller),
+                  # tag (v3.0.0).
+                  image=$(echo "$nocomments" | sed -e 's;.*image:[[:space:]]*;;')
+                  name=$(echo "$image" | sed -e 's;.*/\([^:]*\).*;\1;')
+                  tag=$(echo "$image" | sed -e 's;.*:;;')
+
+                  # Now replace registry and/or tag
+                  NEW_TAG="csiprow"
+                  line="$(echo "$nocomments" | sed -e "s;$image;${name}:${NEW_TAG};")"
+	          echo "        using $line" >&2
+              fi
+              echo "$line"
+          done)"
+          if ! echo "$modified" | kubectl apply -f -; then
+              echo "modified version of $i:"
+              echo "$modified"
+              exit 1
+          fi
+	  echo "kubectl apply -f ${SNAPSHOT_CONTROLLER_YAML}(modified)"
+      done
+  else
+      echo "kubectl apply -f ${CONTROLLER_DIR}/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml"
+      kubectl apply -f "${CONTROLLER_DIR}/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml"
+  fi
+
   cnt=0
   expected_running_pods=$(curl https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/"${CSI_SNAPSHOTTER_VERSION}"/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml | grep replicas | cut -d ':' -f 2-)
   while [ "$(kubectl get pods -l app=snapshot-controller | grep 'Running' -c)" -lt "$expected_running_pods" ]; do
