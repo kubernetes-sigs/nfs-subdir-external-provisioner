@@ -113,7 +113,9 @@ spec:
             path: /var/nfs
 ```
 
-You may also want to change the PROVISIONER_NAME above from `fuseim.pri/ifs` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below:
+You may also want to change the PROVISIONER_NAME above from `fuseim.pri/ifs` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below.
+
+To disable leader election, define an env variable named ENABLE_LEADER_ELECTION and set its value to false.
 
 **Step 5: Deploying your storage class**
 
