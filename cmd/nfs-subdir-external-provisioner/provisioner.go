@@ -247,6 +247,15 @@ func main() {
 		glog.Fatalf("Error getting server version: %v", err)
 	}
 
+	leaderElection := true
+	leaderElectionEnv := os.Getenv("ENABLE_LEADER_ELECTION")
+	if ( leaderElectionEnv != "" ) {
+		leaderElection, err = strconv.ParseBool(leaderElectionEnv)
+		if err != nil {
+			glog.Fatalf("Unable to parse ENABLE_LEADER_ELECTION env var: %v", err)
+		}
+	}
+
 	clientNFSProvisioner := &nfsProvisioner{
 		client: clientset,
 		server: server,
@@ -254,6 +263,11 @@ func main() {
 	}
 	// Start the provision controller which will dynamically provision efs NFS
 	// PVs
-	pc := controller.NewProvisionController(clientset, provisionerName, clientNFSProvisioner, serverVersion.GitVersion)
+	pc := controller.NewProvisionController(clientset,
+		provisionerName,
+		clientNFSProvisioner,
+		serverVersion.GitVersion,
+		controller.LeaderElection(leaderElection),
+	)
 	pc.Run(wait.NeverStop)
 }
