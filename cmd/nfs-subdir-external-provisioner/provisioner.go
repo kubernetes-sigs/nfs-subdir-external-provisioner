@@ -34,8 +34,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	"sigs.k8s.io/sig-storage-lib-external-provisioner/v6/controller"
 )
 
@@ -137,7 +137,7 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	return pv, controller.ProvisioningFinished, nil
 }
 
-func (p *nfsProvisioner) Delete(ctx context.Context,volume *v1.PersistentVolume) error {
+func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
 	relativePath := strings.Replace(path, p.path, "", 1)
 	oldPath := filepath.Join(mountPath, relativePath)
@@ -185,7 +185,7 @@ func (p *nfsProvisioner) Delete(ctx context.Context,volume *v1.PersistentVolume)
 }
 
 // getClassForVolume returns StorageClass
-func (p *nfsProvisioner) getClassForVolume(context context.Context, pv *v1.PersistentVolume) (*storage.StorageClass, error) {
+func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *v1.PersistentVolume) (*storage.StorageClass, error) {
 	if p.client == nil {
 		return nil, fmt.Errorf("Cannot get kube client")
 	}
@@ -193,7 +193,7 @@ func (p *nfsProvisioner) getClassForVolume(context context.Context, pv *v1.Persi
 	if className == "" {
 		return nil, fmt.Errorf("Volume has no storage class")
 	}
-	class, err := p.client.StorageV1().StorageClasses().Get(context, className, metav1.GetOptions{})
+	class, err := p.client.StorageV1().StorageClasses().Get(ctx, className, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func main() {
 
 	leaderElection := true
 	leaderElectionEnv := os.Getenv("ENABLE_LEADER_ELECTION")
-	if ( leaderElectionEnv != "" ) {
+	if leaderElectionEnv != "" {
 		leaderElection, err = strconv.ParseBool(leaderElectionEnv)
 		if err != nil {
 			glog.Fatalf("Unable to parse ENABLE_LEADER_ELECTION env var: %v", err)
