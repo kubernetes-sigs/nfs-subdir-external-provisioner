@@ -121,7 +121,7 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 		Spec: v1.PersistentVolumeSpec{
 			PersistentVolumeReclaimPolicy: *options.StorageClass.ReclaimPolicy,
 			AccessModes:                   options.PVC.Spec.AccessModes,
-			// MountOptions:                  options.MountOptions,
+			MountOptions:                  options.StorageClass.MountOptions,
 			Capacity: v1.ResourceList{
 				v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
 			},
