@@ -69,7 +69,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.prep.outputs.tags }}
           build-args: |
-            APP_FOLDER="/go/src/github.com/$GITHUB_REPOSITORY"
+            APP_FOLDER=/go/src/github.com/${{ github.repository }}
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
