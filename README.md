@@ -182,11 +182,11 @@ spec:
 
 # Build and publish with GitHub Actions
 
-In a forked repository you can use GitHub Actions pipeline defined in [.github/workflows/release.yml](.github/workflows/release.yml). The pipeline builds Docker images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` platforms and publishes them using a multi-arch manifest attaching tags according to next rules:
-* For master branch it uses `:edge` tag and pushes images to the registry.
+In a forked repository you can use GitHub Actions pipeline defined in [.github/workflows/release.yml](.github/workflows/release.yml). The pipeline builds Docker images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` platforms and publishes them using a multi-arch manifest attaching tags according to the next rules:
+* For the master branch, it uses `:edge` tag and pushes images to the registry.
 * For any other branch except master, it uses the branch name as the tag name replacing `/`s with `-`s, and pushes to the registry.
 * For any tag matching patter `v{major}.{minor}.{patch}` it creates several tags: `latest`, `{major}`, `{major}:{minor}`, `{major}:{minor}:{patch}` and pushes to the registry. For any other tag, it uses the tag's name as the image tag and pushes too.
-* For pull requests it uses ephemeral `:pr-{github.event.number}` tags, builds the images but doesn't push to the registry.
+* For pull requests, it uses ephemeral `:pr-{github.event.number}` tags, builds the images but doesn't push to the registry.
 
 The pipeline adds several labels:
 * `org.opencontainers.image.title=${{ github.event.repository.name }}`
@@ -198,5 +198,5 @@ The pipeline adds several labels:
 * `org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}`
 
 **Important:**
-* The pipeline performs the docker login command using `REGISTRY_USERNAME` and `REGISTRY_TOKEN` secrets which have to be provided.
-* You also need to replace `quay.io/external_storage/nfs-subdir-external-provisioner` with your image name.
+* The pipeline performs the docker login command using `REGISTRY_USERNAME` and `REGISTRY_TOKEN` secrets, which have to be provided.
+* You also need to provide the `DOCKER_IMAGE` secret specifying your Docker image name, e.g., `quay.io/[username]/nfs-subdir-external-provisioner`.
