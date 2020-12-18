@@ -6,9 +6,11 @@ Note: This repository is being migrated from https://github.com/kubernetes-incub
 
 ```sh
 make build
-# Set a custom image registry to push the container image
-# Example REGISTRY="quay.io/myorg"
-make image
+make container
+# `nfs-subdir-external-provisioner:latest` will be created. 
+# To upload this to your customer registry, say `quay.io/myorg`, you can use
+# docker tag nfs-subdir-external-provisioner:latest quay.io/myorg/nfs-subdir-external-provisioner:latest
+# docker push quay.io/myorg/nfs-subdir-external-provisioner:latest
 ```
 
 ## How to deploy nfs-client to your cluster
