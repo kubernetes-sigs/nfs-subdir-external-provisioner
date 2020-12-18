@@ -179,3 +179,20 @@ spec:
     requests:
       storage: 1Mi
 ```
+
+# Build and publish with GitHub Actions
+
+In a forked repository you can use GitHub Actions pipeline defined in [.github/workflows/release.yml](.github/workflows/release.yml). The pipeline builds Docker images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` platforms and publishes them using a multi-arch manifest. The pipeline is triggered when you add a tag like `gh-v{major}.{minor}.{patch}` to your commit and push it to GitHub. The tag is used for generating Docker image tags: `latest`, `{major}`, `{major}:{minor}`, `{major}:{minor}:{patch}`.
+
+The pipeline adds several labels:
+* `org.opencontainers.image.title=${{ github.event.repository.name }}`
+* `org.opencontainers.image.description=${{ github.event.repository.description }}`
+* `org.opencontainers.image.url=${{ github.event.repository.html_url }}`
+* `org.opencontainers.image.source=${{ github.event.repository.clone_url }}`
+* `org.opencontainers.image.created=${{ steps.prep.outputs.created }}`
+* `org.opencontainers.image.revision=${{ github.sha }}`
+* `org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}`
+
+**Important:**
+* The pipeline performs the docker login command using `REGISTRY_USERNAME` and `REGISTRY_TOKEN` secrets, which have to be provided.
+* You also need to provide the `DOCKER_IMAGE` secret specifying your Docker image name, e.g., `quay.io/[username]/nfs-subdir-external-provisioner`.
