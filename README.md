@@ -182,11 +182,7 @@ spec:
 
 # Build and publish with GitHub Actions
 
-In a forked repository you can use GitHub Actions pipeline defined in [.github/workflows/release.yml](.github/workflows/release.yml). The pipeline builds Docker images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` platforms and publishes them using a multi-arch manifest attaching tags according to the next rules:
-* For the master branch, it uses `:edge` tag and pushes images to the registry.
-* For any other branch except master, it uses the branch name as the tag name replacing `/`s with `-`s, and pushes to the registry.
-* For any tag matching patter `v{major}.{minor}.{patch}` it creates several tags: `latest`, `{major}`, `{major}:{minor}`, `{major}:{minor}:{patch}` and pushes to the registry. For any other tag, it uses the tag's name as the image tag and pushes too.
-* For pull requests, it uses ephemeral `:pr-{github.event.number}` tags, builds the images but doesn't push to the registry.
+In a forked repository you can use GitHub Actions pipeline defined in [.github/workflows/release.yml](.github/workflows/release.yml). The pipeline builds Docker images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` platforms and publishes them using a multi-arch manifest. The pipeline is triggered when you add a tag like `gh-v{major}.{minor}.{patch}` to your commit and push it to GitHub. The tag is used for generating Docker image tags: `latest`, `{major}`, `{major}:{minor}`, `{major}:{minor}:{patch}`.
 
 The pipeline adds several labels:
 * `org.opencontainers.image.title=${{ github.event.repository.name }}`

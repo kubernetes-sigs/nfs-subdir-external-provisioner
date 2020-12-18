@@ -2,11 +2,8 @@ name: ci
 
 on:
   push:
-    branches:
-      - '**'
     tags:
-      - 'v*.*.*'
-  pull_request:
+      - 'gh-v*.*.*'
 
 jobs:
   docker:
@@ -21,7 +18,7 @@ jobs:
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
-            if [[ $VERSION =~ ^v([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$ ]]; then
+            if [[ $VERSION =~ ^gh-v([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$ ]]; then
                MAJOR="${BASH_REMATCH[1]}"
                MINOR="${BASH_REMATCH[2]}"
                PATCH="${BASH_REMATCH[3]}"
