@@ -1,31 +1,26 @@
-# ⚠️ Repo Archive Notice
+# NFS Subdirectory External Provisioner Helm Chart
 
-As of Nov 13, 2020, charts in this repo will no longer be updated.
-For more information, see the Helm Charts [Deprecation and Archive Notice](https://github.com/helm/charts#%EF%B8%8F-deprecation-and-archive-notice), and [Update](https://helm.sh/blog/charts-repo-deprecation/).
-
-# nfs-client-provisioner
-
-The [NFS client provisioner](https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client) is an automatic provisioner for Kubernetes that uses your *already configured* NFS server, automatically creating Persistent Volumes.
-
-## DEPRECATION NOTICE
-
-This chart is deprecated and no longer supported.
+The [NFS subdir external provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) is an automatic provisioner for Kubernetes that uses your *already configured* NFS server, automatically creating Persistent Volumes.
 
 ## TL;DR;
 
 ```console
-$ helm install --set nfs.server=x.x.x.x --set nfs.path=/exported/path stable/nfs-client-provisioner
+$ git clone https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner.git
+$ cd nfs-subdir-external-provisioner/deploy/helm/
+$ helm install nfs-subdir-external-provisioner . \
+    --set nfs.server=x.x.x.x \
+    --set nfs.path=/exported/path
 ```
 
 For **arm** deployments set `image.repository` to `--set image.repository=quay.io/external_storage/nfs-client-provisioner-arm`
 
 ## Introduction
 
-This charts installs custom [storage class](https://kubernetes.io/docs/concepts/storage/storage-classes/) into a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager. It also installs a [NFS client provisioner](https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client) into the cluster which dynamically creates persistent volumes from single NFS share.
+This charts installs custom [storage class](https://kubernetes.io/docs/concepts/storage/storage-classes/) into a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager. It also installs a [NFS client provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) into the cluster which dynamically creates persistent volumes from single NFS share.
 
 ## Prerequisites
 
-- Kubernetes 1.9+
+- Kubernetes >=1.9, <1.20
 - Existing NFS Share
 
 ## Installing the Chart
@@ -33,7 +28,9 @@ This charts installs custom [storage class](https://kubernetes.io/docs/concepts/
 To install the chart with the release name `my-release`:
 
 ```console
-$ helm install --name my-release --set nfs.server=x.x.x.x --set nfs.path=/exported/path stable/nfs-client-provisioner
+$ helm install my-release . \
+    --set nfs.server=x.x.x.x \
+    --set nfs.path=/exported/path```
 ```
 
 The command deploys the given storage class in the default configuration. It can be used afterswards to provision persistent volumes. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -68,8 +65,8 @@ The following tables lists the configurable parameters of this chart and their d
 | `storageClass.provisionerName`      | Name of the provisionerName                                 | null                                              |
 | `storageClass.archiveOnDelete`      | Archive pvc when deleting                                   | `true`                                            |
 | `storageClass.accessModes`          | Set access mode for PV                                      | `ReadWriteOnce`                                   |
-| `nfs.server`                        | Hostname of the NFS server                                  | null (ip or hostname)                             |
-| `nfs.path`                          | Basepath of the mount point to be used                      | `/ifs/kubernetes`                                 |
+| `nfs.server`                        | Hostname of the NFS server (required)                       | null (ip or hostname)                             |
+| `nfs.path`                          | Basepath of the mount point to be used                      | `/nfs-storage`                                 |
 | `nfs.mountOptions`                  | Mount options (e.g. 'nfsvers=3')                            | null                                              |
 | `resources`                         | Resources required (e.g. CPU, memory)                       | `{}`                                              |
 | `rbac.create`                       | Use Role-based Access Control                               | `true`                                            |

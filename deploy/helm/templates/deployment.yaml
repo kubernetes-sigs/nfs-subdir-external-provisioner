@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "nfs-client-provisioner.fullname" . }}
+  name: {{ template "nfs-subdir-external-provisioner.fullname" . }}
   labels:
-    app: {{ template "nfs-client-provisioner.name" . }}
-    chart: {{ template "nfs-client-provisioner.chart" . }}
+    app: {{ template "nfs-subdir-external-provisioner.name" . }}
+    chart: {{ template "nfs-subdir-external-provisioner.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 spec:
@@ -13,7 +13,7 @@ spec:
     type: {{ .Values.strategyType }}
   selector:
     matchLabels:
-      app: {{ template "nfs-client-provisioner.name" . }}
+      app: {{ template "nfs-subdir-external-provisioner.name" . }}
       release: {{ .Release.Name }}
   template:
     metadata:
@@ -22,10 +22,10 @@ spec:
         scheduler.alpha.kubernetes.io/tolerations: '{{ toJson .Values.tolerations }}'
       {{- end }}
       labels:
-        app: {{ template "nfs-client-provisioner.name" . }}
+        app: {{ template "nfs-subdir-external-provisioner.name" . }}
         release: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ template "nfs-client-provisioner.serviceAccountName" . }}
+      serviceAccountName: {{ template "nfs-subdir-external-provisioner.serviceAccountName" . }}
       {{- if .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
@@ -46,11 +46,11 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
-            - name: nfs-client-root
+            - name: nfs-subdir-external-provisioner-root
               mountPath: /persistentvolumes
           env:
             - name: PROVISIONER_NAME
-              value: {{ template "nfs-client-provisioner.provisionerName" . }}
+              value: {{ template "nfs-subdir-external-provisioner.provisionerName" . }}
             - name: NFS_SERVER
               value: {{ .Values.nfs.server }}
             - name: NFS_PATH
@@ -60,12 +60,12 @@ spec:
 {{ toYaml . | indent 12 }}
           {{- end }}
       volumes:
-        - name: nfs-client-root
+        - name: nfs-subdir-external-provisioner-root
 {{- if .Values.buildMode }}
           emptyDir: {}
 {{- else if .Values.nfs.mountOptions }}
           persistentVolumeClaim:
-            claimName: pvc-{{ template "nfs-client-provisioner.fullname" . }}
+            claimName: pvc-{{ template "nfs-subdir-external-provisioner.fullname" . }}
 {{- else }}
           nfs:
             server: {{ .Values.nfs.server }}

@@ -19,12 +19,16 @@ To note again, you must _already_ have an NFS Server.
 
 ### With Helm
 
-Follow the instructions for the stable helm chart maintained at https://github.com/helm/charts/tree/master/stable/nfs-client-provisioner
+Follow the instructions from the helm chart [README](deploy/helm/README.md).
 
 The tl;dr is
 
-```bash
-$ helm install stable/nfs-client-provisioner --set nfs.server=x.x.x.x --set nfs.path=/exported/path
+```console
+$ git clone https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner.git
+$ cd nfs-subdir-external-provisioner/deploy/helm/
+$ helm install nfs-subdir-external-provisioner . \
+    --set nfs.server=x.x.x.x \
+    --set nfs.path=/exported/path
 ```
 
 ### Without Helm

@@ -2,9 +2,9 @@
 apiVersion: {{ template "podSecurityPolicy.apiVersion" . }}
 kind: PodSecurityPolicy
 metadata:
-  name: {{ template "nfs-client-provisioner.fullname" . }}
+  name: {{ template "nfs-subdir-external-provisioner.fullname" . }}
   labels:
-    app: {{ template "nfs-client-provisioner.name" . }}
+    app: {{ template "nfs-subdir-external-provisioner.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}

@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "nfs-client-provisioner.name" -}}
+{{- define "nfs-subdir-external-provisioner.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "nfs-client-provisioner.fullname" -}}
+{{- define "nfs-subdir-external-provisioner.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,24 +27,24 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "nfs-client-provisioner.chart" -}}
+{{- define "nfs-subdir-external-provisioner.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "nfs-client-provisioner.provisionerName" -}}
+{{- define "nfs-subdir-external-provisioner.provisionerName" -}}
 {{- if .Values.storageClass.provisionerName -}}
 {{- printf .Values.storageClass.provisionerName -}}
 {{- else -}}
-cluster.local/{{ template "nfs-client-provisioner.fullname" . -}}
+cluster.local/{{ template "nfs-subdir-external-provisioner.fullname" . -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "nfs-client-provisioner.serviceAccountName" -}}
+{{- define "nfs-subdir-external-provisioner.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-    {{ default (include "nfs-client-provisioner.fullname" .) .Values.serviceAccount.name }}
+    {{ default (include "nfs-subdir-external-provisioner.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}

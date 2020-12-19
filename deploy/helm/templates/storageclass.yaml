@@ -3,8 +3,8 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   labels:
-    app: {{ template "nfs-client-provisioner.name" . }}
-    chart: {{ template "nfs-client-provisioner.chart" . }}
+    app: {{ template "nfs-subdir-external-provisioner.name" . }}
+    chart: {{ template "nfs-subdir-external-provisioner.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
   name: {{ .Values.storageClass.name }}
@@ -12,7 +12,7 @@ metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 {{- end }}
-provisioner: {{ template "nfs-client-provisioner.provisionerName" . }}
+provisioner: {{ template "nfs-subdir-external-provisioner.provisionerName" . }}
 allowVolumeExpansion: {{ .Values.storageClass.allowVolumeExpansion }}
 reclaimPolicy: {{ .Values.storageClass.reclaimPolicy }}
 parameters:

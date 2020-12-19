@@ -3,11 +3,11 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
-    app: {{ template "nfs-client-provisioner.name" . }}
-    chart: {{ template "nfs-client-provisioner.chart" . }}
+    app: {{ template "nfs-subdir-external-provisioner.name" . }}
+    chart: {{ template "nfs-subdir-external-provisioner.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-  name: {{ template "nfs-client-provisioner.fullname" . }}-runner
+  name: {{ template "nfs-subdir-external-provisioner.fullname" . }}-runner
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -25,6 +25,6 @@ rules:
   - apiGroups:      ['extensions']
     resources:      ['podsecuritypolicies']
     verbs:          ['use']
-    resourceNames:  [{{ template "nfs-client-provisioner.fullname" . }}]
+    resourceNames:  [{{ template "nfs-subdir-external-provisioner.fullname" . }}]
 {{- end }}
 {{- end }}
