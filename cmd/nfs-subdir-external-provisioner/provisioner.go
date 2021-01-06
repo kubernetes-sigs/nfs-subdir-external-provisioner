@@ -18,6 +18,7 @@ package main
 
 import (
 	"errors"
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -31,12 +32,11 @@ import (
 
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/sig-storage-lib-external-provisioner/controller"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/v6/controller"
 )
 
 const (
@@ -78,9 +78,9 @@ const (
 
 var _ controller.Provisioner = &nfsProvisioner{}
 
-func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.PersistentVolume, error) {
+func (p *nfsProvisioner) Provision(ctx context.Context, options controller.ProvisionOptions) (*v1.PersistentVolume, controller.ProvisioningState, error) {
 	if options.PVC.Spec.Selector != nil {
-		return nil, fmt.Errorf("claim Selector is not supported")
+		return nil, controller.ProvisioningFinished, fmt.Errorf("claim Selector is not supported")
 	}
 	glog.V(4).Infof("nfs provisioner: VolumeOptions %v", options)
 
@@ -110,7 +110,7 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 
 	glog.V(4).Infof("creating path %s", fullPath)
 	if err := os.MkdirAll(fullPath, 0777); err != nil {
-		return nil, errors.New("unable to create directory to provision new pv: " + err.Error())
+		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
 	os.Chmod(fullPath, 0777)
 
@@ -134,10 +134,10 @@ func (p *nfsProvisioner) Provision(options controller.ProvisionOptions) (*v1.Per
 			},
 		},
 	}
-	return pv, nil
+	return pv, controller.ProvisioningFinished, nil
 }
 
-func (p *nfsProvisioner) Delete(volume *v1.PersistentVolume) error {
+func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
 	relativePath := strings.Replace(path, p.path, "", 1)
 	oldPath := filepath.Join(mountPath, relativePath)
@@ -193,7 +193,7 @@ func (p *nfsProvisioner) getClassForVolume(pv *v1.PersistentVolume) (*storage.St
 	if className == "" {
 		return nil, fmt.Errorf("Volume has no storage class")
 	}
-	class, err := p.client.StorageV1().StorageClasses().Get(className, metav1.GetOptions{})
+	class, err := p.client.StorageV1().StorageClasses().Get(context.TODO(), className, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -269,5 +269,5 @@ func main() {
 		serverVersion.GitVersion,
 		controller.LeaderElection(leaderElection),
 	)
-	pc.Run(wait.NeverStop)
+	pc.Run(context.TODO())
 }
