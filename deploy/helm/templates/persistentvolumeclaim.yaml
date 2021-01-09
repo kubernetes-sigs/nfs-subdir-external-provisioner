@@ -1,0 +1,17 @@
+{{ if .Values.nfs.mountOptions -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc-{{ template "nfs-subdir-external-provisioner.fullname" . }}
+spec:
+  accessModes:
+    - {{ .Values.storageClass.accessModes }}
+  volumeMode: Filesystem
+  storageClassName: ""
+  selector:
+    matchLabels:
+      nfs-subdir-external-provisioner: {{ template "nfs-subdir-external-provisioner.fullname" . }}
+  resources:
+    requests:
+      storage: 10Mi
+{{ end -}}
