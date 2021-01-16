@@ -8,6 +8,11 @@
 - Make nfs-client ARM deployment consistent with regular deployment (https://github.com/kubernetes-retired/external-storage/pull/1090)
 - Update Deployment apiVersion (from `extensions/v1beta1` to `apps/v1`) and added selector field (https://github.com/kubernetes-retired/external-storage/pull/1230/, https://github.com/kubernetes-retired/external-storage/pull/1231/, https://github.com/kubernetes-retired/external-storage/pull/1283/, https://github.com/kubernetes-retired/external-storage/pull/1294/)
 - Fix namespace in deployments (https://github.com/kubernetes-retired/external-storage/pull/1087, https://github.com/kubernetes-retired/external-storage/pull/1279)
+- Update path creation and implemented possibility save data after removing PV (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/7/)
+- Support for running controller outside of cluster (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/9)
+- Add a flag to disable leader election (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/22)
+- Switched to kubernetes `v1.18.0` to be compatible with `>=1.20` selfLink removal (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/26/)
+- Enable mountOptions from StorageClass to PersistentVolume (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/28)
 
 # v3.1.0
 - README Clarifications and minor formatting improvements (https://github.com/kubernetes-retired/external-storage/pull/938/)
