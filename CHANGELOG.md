@@ -1,11 +1,11 @@
 # v4.0.0
 - Remove redundant field in the rbac.yaml (https://github.com/kubernetes-retired/external-storage/pull/970)
 - Fixing documentation to be correct for both `kubectl` and `oc` (https://github.com/kubernetes-retired/external-storage/pull/969)
-- Point nfs-client users to Helm and split up yamls (https://github.com/kubernetes-retired/external-storage/pull/995)
+- Point users to Helm and split up yamls (https://github.com/kubernetes-retired/external-storage/pull/995)
 - Use `kubernetes-sigs/sig-storage-lib-external-provisioner` instaed of `incubator/external-storage/lib` (https://github.com/kubernetes-retired/external-storage/pull/1026)
 - Fill in rbac.yaml with ServiceAccount manifest (https://github.com/kubernetes-retired/external-storage/pull/1060, https://github.com/kubernetes-retired/external-storage/pull/1179)
 - Fix some typos in README (https://github.com/kubernetes-retired/external-storage/pull/1054)
-- Make nfs-client ARM deployment consistent with regular deployment (https://github.com/kubernetes-retired/external-storage/pull/1090)
+- Make ARM deployment consistent with regular deployment (https://github.com/kubernetes-retired/external-storage/pull/1090)
 - Update Deployment apiVersion (from `extensions/v1beta1` to `apps/v1`) and added selector field (https://github.com/kubernetes-retired/external-storage/pull/1230/, https://github.com/kubernetes-retired/external-storage/pull/1231/, https://github.com/kubernetes-retired/external-storage/pull/1283/, https://github.com/kubernetes-retired/external-storage/pull/1294/)
 - Fix namespace in deployments (https://github.com/kubernetes-retired/external-storage/pull/1087, https://github.com/kubernetes-retired/external-storage/pull/1279)
 - Update path creation and implemented possibility save data after removing PV (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/7/)

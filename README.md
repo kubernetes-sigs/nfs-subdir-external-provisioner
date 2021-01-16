@@ -175,7 +175,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: test-claim
-    annotations:
+  annotations:
     nfs.io/storage-path: "test-path" # not required, depending on whether this annotation was shown in the storage class description
 spec:
   storageClassName: managed-nfs-storage
