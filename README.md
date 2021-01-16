@@ -107,7 +107,7 @@ spec:
               mountPath: /persistentvolumes
           env:
             - name: PROVISIONER_NAME
-              value: fuseim.pri/ifs
+              value: nfs-subdir-external-provisioner
             - name: NFS_SERVER
               value: <YOUR NFS SERVER HOSTNAME>
             - name: NFS_PATH
@@ -119,7 +119,7 @@ spec:
             path: /var/nfs
 ```
 
-You may also want to change the PROVISIONER_NAME above from `fuseim.pri/ifs` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below.
+You may also want to change the PROVISIONER_NAME above from `nfs-subdir-external-provisioner` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below.
 
 To disable leader election, define an env variable named ENABLE_LEADER_ELECTION and set its value to false.
 
@@ -129,8 +129,8 @@ To disable leader election, define an env variable named ENABLE_LEADER_ELECTION 
 
 | Name            | Description                                                                                                                                                                  |                             Default                              |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------: |
-| onDelete        | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory.                                                          | will be archived with name on the share: `archived-+volume.Name` |
-| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored.                                                           | will be archived with name on the share: `archived-+volume.Name` |
+| onDelete        | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory.                                                          | will be archived with name on the share: `archived-<volume.Name>` |
+| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored.                                                           | will be archived with name on the share: `archived-<volume.Name>` |
 | pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.}`: `${PVC.namespace}` |                               n/a                                |
 
 This is `deploy/class.yaml` which defines the NFS-Client's Kubernetes Storage Class:
@@ -140,7 +140,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: managed-nfs-storage
-provisioner: fuseim.pri/ifs # or choose another name, must match deployment's env PROVISIONER_NAME'
+provisioner: nfs-subdir-external-provisioner # or choose another name, must match deployment's env PROVISIONER_NAME'
 parameters:
   pathPattern: "${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}" # waits for nfs.io/storage-path annotation, if not specified will accept as empty string.
   onDelete: delete
@@ -166,7 +166,7 @@ Now check the folder has been deleted.
 
 **Step 7: Deploying your own PersistentVolumeClaims**
 
-To deploy your own PVC, make sure that you have the correct `storage-class` as indicated by your `deploy/class.yaml` file.
+To deploy your own PVC, make sure that you have the correct `storageClassName` as indicated by your `deploy/class.yaml` file.
 
 For example:
 
@@ -175,10 +175,10 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: test-claim
-  annotations:
-    volume.beta.kubernetes.io/storage-class: "managed-nfs-storage"
+    annotations:
     nfs.io/storage-path: "test-path" # not required, depending on whether this annotation was shown in the storage class description
 spec:
+  storageClassName: managed-nfs-storage
   accessModes:
     - ReadWriteMany
   resources:
