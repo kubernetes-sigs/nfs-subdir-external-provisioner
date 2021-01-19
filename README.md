@@ -200,5 +200,5 @@ The pipeline adds several labels:
 * `org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}`
 
 **Important:**
-* The pipeline performs the docker login command using `REGISTRY_USERNAME` and `REGISTRY_TOKEN` secrets, which have to be provided.
+* The pipeline performs the docker login command using `REGISTRY_SERVER`, `REGISTRY_USERNAME` and `REGISTRY_TOKEN` secrets, which have to be provided.
 * You also need to provide the `DOCKER_IMAGE` secret specifying your Docker image name, e.g., `quay.io/[username]/nfs-subdir-external-provisioner`.
