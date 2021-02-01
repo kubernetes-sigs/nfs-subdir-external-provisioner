@@ -119,6 +119,8 @@ spec:
             path: /var/nfs
 ```
 
+**Alias mode:** use the provisioner in this mode to share the same existing NFS claim to multiple namespaces, without propagating manually the server/path in each namespace's claim. For example, first create a `data-original` claim as normal, through any provisioner such as `example.com/efs-aws` or the `fuseim.pri/ifs` example below. In the same namespace of your choice, run a new NFS client provisioner that uses the claim. Set NFS_SERVER to the magic value of `--alias`. Give the new deployment a clearer name, `nfs-alias-provisioner`, and set PROVISIONER_NAME to `foo.com/nfs-alias-provisioner`. Then create a StorageClass `nfs-alias` with its provisioner set to `foo.com/nfs-alias-provisioner`. Now, every new `nfs-alias` claim you create in any namespace will have the same `server:path` as the `data-original` volume.
+
 You may also want to change the PROVISIONER_NAME above from `fuseim.pri/ifs` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below.
 
 To disable leader election, define an env variable named ENABLE_LEADER_ELECTION and set its value to false.
