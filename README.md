@@ -107,7 +107,7 @@ spec:
               mountPath: /persistentvolumes
           env:
             - name: PROVISIONER_NAME
-              value: nfs-subdir-external-provisioner
+              value: k8s-sigs.io/nfs-subdir-external-provisioner
             - name: NFS_SERVER
               value: <YOUR NFS SERVER HOSTNAME>
             - name: NFS_PATH
@@ -119,7 +119,7 @@ spec:
             path: /var/nfs
 ```
 
-You may also want to change the PROVISIONER_NAME above from `nfs-subdir-external-provisioner` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below.
+You may also want to change the PROVISIONER_NAME above from `k8s-sigs.io/nfs-subdir-external-provisioner` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below.
 
 To disable leader election, define an env variable named ENABLE_LEADER_ELECTION and set its value to false.
 
@@ -140,7 +140,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: managed-nfs-storage
-provisioner: nfs-subdir-external-provisioner # or choose another name, must match deployment's env PROVISIONER_NAME'
+provisioner: k8s-sigs.io/nfs-subdir-external-provisioner # or choose another name, must match deployment's env PROVISIONER_NAME'
 parameters:
   pathPattern: "${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}" # waits for nfs.io/storage-path annotation, if not specified will accept as empty string.
   onDelete: delete

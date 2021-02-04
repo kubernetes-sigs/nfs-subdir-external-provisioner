@@ -1,6 +1,6 @@
 # v4.0.0
 - Remove redundant field in the rbac.yaml (https://github.com/kubernetes-retired/external-storage/pull/970)
-- Use `kubernetes-sigs/sig-storage-lib-external-provisioner` instaed of `incubator/external-storage/lib` (https://github.com/kubernetes-retired/external-storage/pull/1026)
+- Use `kubernetes-sigs/sig-storage-lib-external-provisioner` instead of `incubator/external-storage/lib` (https://github.com/kubernetes-retired/external-storage/pull/1026)
 - Fill in rbac.yaml with ServiceAccount manifest (https://github.com/kubernetes-retired/external-storage/pull/1060, https://github.com/kubernetes-retired/external-storage/pull/1179)
 - Make ARM deployment consistent with regular deployment (https://github.com/kubernetes-retired/external-storage/pull/1090)
 - Update Deployment apiVersion (from `extensions/v1beta1` to `apps/v1`) and added selector field (https://github.com/kubernetes-retired/external-storage/pull/1230/, https://github.com/kubernetes-retired/external-storage/pull/1231/, https://github.com/kubernetes-retired/external-storage/pull/1283/, https://github.com/kubernetes-retired/external-storage/pull/1294/)
