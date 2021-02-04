@@ -5,9 +5,8 @@ The [NFS subdir external provisioner](https://github.com/kubernetes-sigs/nfs-sub
 ## TL;DR;
 
 ```console
-$ git clone https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner.git
-$ cd nfs-subdir-external-provisioner/deploy/helm/
-$ helm install nfs-subdir-external-provisioner . \
+$ helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+$ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=x.x.x.x \
     --set nfs.path=/exported/path
 ```
@@ -28,9 +27,9 @@ This charts installs custom [storage class](https://kubernetes.io/docs/concepts/
 To install the chart with the release name `my-release`:
 
 ```console
-$ helm install my-release . \
+$ helm install my-release nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=x.x.x.x \
-    --set nfs.path=/exported/path```
+    --set nfs.path=/exported/path
 ```
 
 The command deploys the given storage class in the default configuration. It can be used afterswards to provision persistent volumes. The [configuration](#configuration) section lists the parameters that can be configured during installation.
