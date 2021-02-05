@@ -27,7 +27,7 @@ spec:
               mountPath: /persistentvolumes
           env:
             - name: PROVISIONER_NAME
-              value: fuseim.pri/ifs
+              value: k8s-sigs.io/nfs-subdir-external-provisioner
             - name: NFS_SERVER
               value: 10.10.10.60
             - name: NFS_PATH
