@@ -8,7 +8,7 @@ Note: This repository is being migrated from https://github.com/kubernetes-incub
 make build
 make container
 # `nfs-subdir-external-provisioner:latest` will be created. 
-# To upload this to your customer registry, say `quay.io/myorg`, you can use
+# To upload this to your custom registry, say `quay.io/myorg`, you can use
 # docker tag nfs-subdir-external-provisioner:latest quay.io/myorg/nfs-subdir-external-provisioner:latest
 # docker push quay.io/myorg/nfs-subdir-external-provisioner:latest
 ```
@@ -100,7 +100,7 @@ spec:
       serviceAccountName: nfs-client-provisioner
       containers:
         - name: nfs-client-provisioner
-          image: quay.io/external_storage/nfs-client-provisioner:latest
+          image: gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner:v4.0.0
           volumeMounts:
             - name: nfs-client-root
               mountPath: /persistentvolumes

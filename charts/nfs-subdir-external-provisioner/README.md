@@ -11,8 +11,6 @@ $ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/n
     --set nfs.path=/exported/path
 ```
 
-For **arm** deployments set `image.repository` to `--set image.repository=quay.io/external_storage/nfs-client-provisioner-arm`
-
 ## Introduction
 
 This charts installs custom [storage class](https://kubernetes.io/docs/concepts/storage/storage-classes/) into a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager. It also installs a [NFS client provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) into the cluster which dynamically creates persistent volumes from single NFS share.
@@ -54,8 +52,8 @@ The following tables lists the configurable parameters of this chart and their d
 | ----------------------------------- | ----------------------------------------------------------- | ------------------------------------------------- |
 | `replicaCount`                      | Number of provisioner instances to deployed                 | `1`                                               |
 | `strategyType`                      | Specifies the strategy used to replace old Pods by new ones | `Recreate`                                        |
-| `image.repository`                  | Provisioner image                                           | `quay.io/external_storage/nfs-client-provisioner` |
-| `image.tag`                         | Version of provisioner image                                | `v3.1.0-k8s1.11`                                  |
+| `image.repository`                  | Provisioner image                                           | `gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner` |
+| `image.tag`                         | Version of provisioner image                                | `v4.0.0`                                  |
 | `image.pullPolicy`                  | Image pull policy                                           | `IfNotPresent`                                    |
 | `storageClass.name`                 | Name of the storageClass                                    | `nfs-client`                                      |
 | `storageClass.defaultClass`         | Set as the default StorageClass                             | `false`                                           |

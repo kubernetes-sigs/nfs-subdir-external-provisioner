@@ -2,8 +2,8 @@ replicaCount: 1
 strategyType: Recreate
 
 image:
-  repository: quay.io/external_storage/nfs-client-provisioner
-  tag: v3.1.0-k8s1.11
+  repository: gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner
+  tag: v4.0.0
   pullPolicy: IfNotPresent
 
 nfs:
