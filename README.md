@@ -1,21 +1,13 @@
-# Kubernetes NFS-Client Provisioner
+# Kubernetes NFS Subdir External Provisioner
 
-NFS subdir external provisioner is an automatic provisioner that use your _existing and already configured_ NFS server to support dynamic provisioning of Kubernetes Persistent Volumes via Persistent Volume Claims. Persistent volumes are provisioned as `${namespace}-${pvcName}-${pvName}`.
+**NFS subdir external provisioner** is an automatic provisioner that use your _existing and already configured_ NFS server to support dynamic provisioning of Kubernetes Persistent Volumes via Persistent Volume Claims. Persistent volumes are provisioned as `${namespace}-${pvcName}-${pvName}`.
 
-Note: This repository is being migrated from https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client. Some of the following instructions will be updated once the migration is completed. To test container image built from this repository, you will have to build and push the nfs-client-provisioner image using the following instructions.
+Note: This repository is migrated from https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client. As part of the migration:
+- The container image name and repository has changed to `gcr.io/k8s-staging-sig-storage` and `nfs-subdir-external-provisioner` respectively. 
+- To maintain backward compatibility with earlier deployment files, the naming of NFS Client Provisioner is retained as `nfs-client-provisioner` in the deployment YAMLs.
+- One of the pending areas for development on this repository is to add automated e2e tests. If you would like to contribute, please raise an issue or reach us on the Kubernetes slack #sig-storage channel.
 
-```sh
-make build
-make container
-# `nfs-subdir-external-provisioner:latest` will be created. 
-# To upload this to your customer registry, say `quay.io/myorg`, you can use
-# docker tag nfs-subdir-external-provisioner:latest quay.io/myorg/nfs-subdir-external-provisioner:latest
-# docker push quay.io/myorg/nfs-subdir-external-provisioner:latest
-```
-
-## How to deploy nfs-client to your cluster
-
-**nfs-client** is an automatic provisioner that use your _existing and already configured_ NFS server to support dynamic provisioning of Kubernetes Persistent Volumes via Persistent Volume Claims. Persistent volumes are provisioned as `${namespace}-${pvcName}-${pvName}`.
+## How to deploy NFS Subdir External Provisioner to your cluster
 
 To note again, you must _already_ have an NFS Server.
 
@@ -38,7 +30,7 @@ $ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/n
 
 Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.
 
-**Step 2: Get the NFS-Client Provisioner files**
+**Step 2: Get the NFS Subdir External Provisioner files**
 
 To setup the provisioner you will download a set of YAML files, edit them to add your NFS server's connection information and then apply each with the `kubectl` / `oc` command.
 
@@ -72,11 +64,9 @@ $ oc create role use-scc-hostmount-anyuid --verb=use --resource=scc --resource-n
 $ oc adm policy add-role-to-user use-scc-hostmount-anyuid system:serviceaccount:$NAMESPACE:nfs-client-provisioner
 ```
 
-**Step 4: Configure the NFS-Client provisioner**
+**Step 4: Configure the NFS subdir external provisioner**
 
-Note: To deploy to an ARM-based environment, use: `deploy/deployment-arm.yaml` instead, otherwise use `deploy/deployment.yaml`.
-
-You must edit the provisioner's deployment file to specify the correct location of your nfs-client-provisioner container image.
+If you would like to use a custom built nfs-subdir-external-provisioner image, you must edit the provisioner's deployment file to specify the correct location of your `nfs-client-provisioner` container image.
 
 Next you must edit the provisioner's deployment file to add connection information for your NFS server. Edit `deploy/deployment.yaml` and replace the two occurences of <YOUR NFS SERVER HOSTNAME> with your server's hostname.
 
@@ -100,7 +90,7 @@ spec:
       serviceAccountName: nfs-client-provisioner
       containers:
         - name: nfs-client-provisioner
-          image: quay.io/external_storage/nfs-client-provisioner:latest
+          image: gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner:v4.0.0
           volumeMounts:
             - name: nfs-client-root
               mountPath: /persistentvolumes
@@ -118,7 +108,7 @@ spec:
             path: /var/nfs
 ```
 
-You may also want to change the PROVISIONER_NAME above from `k8s-sigs.io/nfs-subdir-external-provisioner` to something more descriptive like `nfs-storage`, but if you do remember to also change the PROVISIONER_NAME in the storage class definition below.
+Note: If you want to change the PROVISIONER_NAME above from `k8s-sigs.io/nfs-subdir-external-provisioner` to something else like `myorg/nfs-storage`, remember to also change the PROVISIONER_NAME in the storage class definition below.
 
 To disable leader election, define an env variable named ENABLE_LEADER_ELECTION and set its value to false.
 
@@ -132,7 +122,7 @@ To disable leader election, define an env variable named ENABLE_LEADER_ELECTION 
 | archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored.                                                           | will be archived with name on the share: `archived-<volume.Name>` |
 | pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.}`: `${PVC.namespace}` |                               n/a                                |
 
-This is `deploy/class.yaml` which defines the NFS-Client's Kubernetes Storage Class:
+This is `deploy/class.yaml` which defines the NFS subdir external provisioner's Kubernetes Storage Class:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -147,7 +137,7 @@ parameters:
 
 **Step 6: Finally, test your environment!**
 
-Now we'll test your NFS provisioner.
+Now we'll test your NFS subdir external provisioner.
 
 Deploy:
 
@@ -185,6 +175,20 @@ spec:
       storage: 1Mi
 ```
 
+# Build and publish your own container image
+
+To build your own custom container image from this repository, you will have to build and push the nfs-subdir-external-provisioner image using the following instructions.
+
+```sh
+make build
+make container
+# `nfs-subdir-external-provisioner:latest` will be created. 
+# Note: This will build a single-arch image that matches the machine on which container is built.
+# To upload this to your custom registry, say `quay.io/myorg` and arch as amd64, you can use
+# docker tag nfs-subdir-external-provisioner:latest quay.io/myorg/nfs-subdir-external-provisioner-amd64:latest
+# docker push quay.io/myorg/nfs-subdir-external-provisioner-amd64:latest
+```
+
 # Build and publish with GitHub Actions
 
 In a forked repository you can use GitHub Actions pipeline defined in [.github/workflows/release.yml](.github/workflows/release.yml). The pipeline builds Docker images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7` platforms and publishes them using a multi-arch manifest. The pipeline is triggered when you add a tag like `gh-v{major}.{minor}.{patch}` to your commit and push it to GitHub. The tag is used for generating Docker image tags: `latest`, `{major}`, `{major}:{minor}`, `{major}:{minor}:{patch}`.
@@ -201,3 +205,6 @@ The pipeline adds several labels:
 **Important:**
 * The pipeline performs the docker login command using `REGISTRY_USERNAME` and `REGISTRY_TOKEN` secrets, which have to be provided.
 * You also need to provide the `DOCKER_IMAGE` secret specifying your Docker image name, e.g., `quay.io/[username]/nfs-subdir-external-provisioner`.
+
+
+
