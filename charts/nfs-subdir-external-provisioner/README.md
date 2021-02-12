@@ -17,7 +17,7 @@ This charts installs custom [storage class](https://kubernetes.io/docs/concepts/
 
 ## Prerequisites
 
-- Kubernetes >=1.9, <1.20
+- Kubernetes >=1.9
 - Existing NFS Share
 
 ## Installing the Chart
