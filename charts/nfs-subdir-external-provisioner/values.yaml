@@ -38,6 +38,10 @@ storageClass:
   # Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany
   accessModes: ReadWriteOnce
 
+leaderElection:
+  # When set to false leader election will be disabled
+  enabled: true
+
 ## For RBAC support:
 rbac:
   # Specifies whether RBAC resources should be created

@@ -55,6 +55,10 @@ spec:
               value: {{ .Values.nfs.server }}
             - name: NFS_PATH
               value: {{ .Values.nfs.path }}
+            {{- if eq .Values.leaderElection.enabled false }}
+            - name: ENABLE_LEADER_ELECTION
+              value: false
+            {{- end }}
           {{- with .Values.resources }}
           resources:
 {{ toYaml . | indent 12 }}
