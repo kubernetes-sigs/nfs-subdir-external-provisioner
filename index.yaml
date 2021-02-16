@@ -3,6 +3,23 @@ entries:
   nfs-subdir-external-provisioner:
   - apiVersion: v1
     appVersion: 4.0.0
+    created: "2021-02-16T20:11:30.394452102Z"
+    description: nfs-subdir-external-provisioner is an automatic provisioner that used your *already configured* NFS server, automatically creating Persistent Volumes.
+    digest: 9004be606dfd878d5ac9a04f62accbf2189df84e28ec2f7f86709c9dba6462ec
+    home: https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+    keywords:
+    - nfs
+    - storage
+    - provisioner
+    kubeVersion: '>=1.9.0-0'
+    name: nfs-subdir-external-provisioner
+    sources:
+    - https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+    urls:
+    - https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/releases/download/nfs-subdir-external-provisioner-4.0.1/nfs-subdir-external-provisioner-4.0.1.tgz
+    version: 4.0.1
+  - apiVersion: v1
+    appVersion: 4.0.0
     created: "2021-02-12T10:29:07.305752723Z"
     description: nfs-subdir-external-provisioner is an automatic provisioner that used your *already configured* NFS server, automatically creating Persistent Volumes.
     digest: d5ebb96c7bfb88e7071354a08d163c107ec601a385585334a256ac28ad34e567
