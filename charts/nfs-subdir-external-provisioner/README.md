@@ -62,6 +62,7 @@ The following tables lists the configurable parameters of this chart and their d
 | `storageClass.provisionerName`      | Name of the provisionerName                                 | null                                              |
 | `storageClass.archiveOnDelete`      | Archive pvc when deleting                                   | `true`                                            |
 | `storageClass.accessModes`          | Set access mode for PV                                      | `ReadWriteOnce`                                   |
+| `leaderElection.enabled`            | Enables or disables leader election                         | `true`                                            |
 | `nfs.server`                        | Hostname of the NFS server (required)                       | null (ip or hostname)                             |
 | `nfs.path`                          | Basepath of the mount point to be used                      | `/nfs-storage`                                 |
 | `nfs.mountOptions`                  | Mount options (e.g. 'nfsvers=3')                            | null                                              |
