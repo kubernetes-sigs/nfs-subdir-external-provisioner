@@ -57,7 +57,7 @@ spec:
               value: {{ .Values.nfs.path }}
             {{- if eq .Values.leaderElection.enabled false }}
             - name: ENABLE_LEADER_ELECTION
-              value: false
+              value: "false"
             {{- end }}
           {{- with .Values.resources }}
           resources:
