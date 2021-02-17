@@ -54,7 +54,7 @@ The following tables lists the configurable parameters of this chart and their d
 | `kind`                              | Kind of deployment (e.g. `Deployment` or `DaemonSet`)       | `Deployment`                                      |
 | `strategyType`                      | Specifies the strategy used to replace old Pods by new ones | `Recreate`                                        |
 | `image.repository`                  | Provisioner image                                           | `gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner` |
-| `image.tag`                         | Version of provisioner image                                | `v4.0.0`                                  |
+| `image.tag`                         | Version of provisioner image                                | `v4.0.0`                                          |
 | `image.pullPolicy`                  | Image pull policy                                           | `IfNotPresent`                                    |
 | `storageClass.name`                 | Name of the storageClass                                    | `nfs-client`                                      |
 | `storageClass.defaultClass`         | Set as the default StorageClass                             | `false`                                           |
@@ -65,7 +65,7 @@ The following tables lists the configurable parameters of this chart and their d
 | `storageClass.accessModes`          | Set access mode for PV                                      | `ReadWriteOnce`                                   |
 | `leaderElection.enabled`            | Enables or disables leader election                         | `true`                                            |
 | `nfs.server`                        | Hostname of the NFS server (required)                       | null (ip or hostname)                             |
-| `nfs.path`                          | Basepath of the mount point to be used                      | `/nfs-storage`                                 |
+| `nfs.path`                          | Basepath of the mount point to be used                      | `/nfs-storage`                                    |
 | `nfs.mountOptions`                  | Mount options (e.g. 'nfsvers=3')                            | null                                              |
 | `resources`                         | Resources required (e.g. CPU, memory)                       | `{}`                                              |
 | `rbac.create`                       | Use Role-based Access Control                               | `true`                                            |
