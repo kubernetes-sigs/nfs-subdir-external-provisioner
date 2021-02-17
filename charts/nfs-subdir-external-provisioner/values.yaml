@@ -1,3 +1,4 @@
+kind: Deployment
 replicaCount: 1
 strategyType: Recreate
 

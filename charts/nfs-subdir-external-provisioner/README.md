@@ -51,6 +51,7 @@ The following tables lists the configurable parameters of this chart and their d
 | Parameter                           | Description                                                 | Default                                           |
 | ----------------------------------- | ----------------------------------------------------------- | ------------------------------------------------- |
 | `replicaCount`                      | Number of provisioner instances to deployed                 | `1`                                               |
+| `kind`                              | Kind of deployment (e.g. `Deployment` or `DaemonSet`)       | `Deployment`                                      |
 | `strategyType`                      | Specifies the strategy used to replace old Pods by new ones | `Recreate`                                        |
 | `image.repository`                  | Provisioner image                                           | `gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner` |
 | `image.tag`                         | Version of provisioner image                                | `v4.0.0`                                  |

@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: {{ .Values.kind }}
 metadata:
   name: {{ template "nfs-subdir-external-provisioner.fullname" . }}
   labels:
@@ -8,9 +8,11 @@ metadata:
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 spec:
+{{- if eq .Values.kind "Deployment" }}
   replicas: {{ .Values.replicaCount }}
   strategy:
     type: {{ .Values.strategyType }}
+{{- end }}
   selector:
     matchLabels:
       app: {{ template "nfs-subdir-external-provisioner.name" . }}
