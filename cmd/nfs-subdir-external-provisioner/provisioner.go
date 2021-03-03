@@ -139,8 +139,8 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 
 func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
-	relativePath := strings.Replace(path, p.path, "", 1)
-	oldPath := filepath.Join(mountPath, relativePath)
+	basePath := filepath.Base(path)
+	oldPath := filepath.Join(mountPath, basePath)
 
 	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
 		glog.Warningf("path %s does not exist, deletion skipped", oldPath)
@@ -179,7 +179,7 @@ func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume
 		}
 	}
 
-	archivePath := filepath.Join(mountPath, "archived-"+volume.Name)
+	archivePath := filepath.Join(mountPath, "archived-"+basePath)
 	glog.V(4).Infof("archiving path %s to %s", oldPath, archivePath)
 	return os.Rename(oldPath, archivePath)
 }
