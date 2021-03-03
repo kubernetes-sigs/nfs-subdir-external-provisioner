@@ -61,6 +61,7 @@ The following tables lists the configurable parameters of this chart and their d
 | `storageClass.reclaimPolicy`        | Method used to reclaim an obsoleted volume                  | `Delete`                                          |
 | `storageClass.provisionerName`      | Name of the provisionerName                                 | null                                              |
 | `storageClass.archiveOnDelete`      | Archive pvc when deleting                                   | `true`                                            |
+| `storageClass.pathPattern`          | Specifies a template for the directory name                 | null                                              |
 | `storageClass.accessModes`          | Set access mode for PV                                      | `ReadWriteOnce`                                   |
 | `leaderElection.enabled`            | Enables or disables leader election                         | `true`                                            |
 | `nfs.server`                        | Hostname of the NFS server (required)                       | null (ip or hostname)                             |
