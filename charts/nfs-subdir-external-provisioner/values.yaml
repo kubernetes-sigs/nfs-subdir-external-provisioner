@@ -35,6 +35,11 @@ storageClass:
   # When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.
   archiveOnDelete: true
 
+  # If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory.
+  # Overrides archiveOnDelete.
+  # Ignored if value not set.
+  onDelete: 
+
   # Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.
   # Ignored if value not set.
   pathPattern: 
