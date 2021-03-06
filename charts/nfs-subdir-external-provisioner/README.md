@@ -61,7 +61,7 @@ The following tables lists the configurable parameters of this chart and their d
 | `storageClass.reclaimPolicy`        | Method used to reclaim an obsoleted volume                  | `Delete`                                          |
 | `storageClass.provisionerName`      | Name of the provisionerName                                 | null                                              |
 | `storageClass.archiveOnDelete`      | Archive pvc when deleting                                   | `true`                                            |
-| `storageClass.onDelete`             | Defines strategy on pvc deletion, overrides archiveOnDelete | null                                              |
+| `storageClass.onDelete`             | Strategy on pvc deletion. Overrides archiveOnDelete when set to lowercase values 'delete' or 'retain'    | null |
 | `storageClass.pathPattern`          | Specifies a template for the directory name                 | null                                              |
 | `storageClass.accessModes`          | Set access mode for PV                                      | `ReadWriteOnce`                                   |
 | `leaderElection.enabled`            | Enables or disables leader election                         | `true`                                            |
