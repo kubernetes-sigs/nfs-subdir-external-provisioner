@@ -37,7 +37,7 @@ storageClass:
 
   # Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.
   # Ignored if value not set.
-  pathPattern: 
+  pathPattern:
 
   # Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany
   accessModes: ReadWriteOnce
