@@ -7,6 +7,9 @@ metadata:
   name: {{ template "nfs-subdir-external-provisioner.fullname" . }}-runner
 rules:
   - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "delete"]
   - apiGroups: [""]
