@@ -60,3 +60,22 @@ Return the appropriate apiVersion for podSecurityPolicy.
 {{- print "extensions/v1beta1" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Common labels
+*/}}
+{{- define "nfs-subdir-external-provisioner.labels" -}}
+chart: {{ template "nfs-subdir-external-provisioner.chart" . }}
+heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{- toYaml . | nindent 0 }}
+{{- end }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "nfs-subdir-external-provisioner.selectorLabels" -}}
+app: {{ template "nfs-subdir-external-provisioner.name" . }}
+release: {{ .Release.Name }}
+{{- end }}
