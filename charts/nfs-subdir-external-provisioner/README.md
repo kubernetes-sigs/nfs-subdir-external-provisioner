@@ -55,6 +55,7 @@ The following tables lists the configurable parameters of this chart and their d
 | `image.repository`                  | Provisioner image                                           | `gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner` |
 | `image.tag`                         | Version of provisioner image                                | `v4.0.0`                                                         |
 | `image.pullPolicy`                  | Image pull policy                                           | `IfNotPresent`                                                   |
+| `imagePullSecrets`                  | Image pull secrets                                          | `[]`                                                             |
 | `storageClass.name`                 | Name of the storageClass                                    | `nfs-client`                                                     |
 | `storageClass.defaultClass`         | Set as the default StorageClass                             | `false`                                                          |
 | `storageClass.allowVolumeExpansion` | Allow expanding the volume                                  | `true`                                                           |
