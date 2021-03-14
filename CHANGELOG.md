@@ -1,3 +1,7 @@
+# v4.0.1
+- Add arm7 (32bit) support (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/58)
+- Preserve name of the PV directory name during archiving (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/59)
+
 # v4.0.0
 - Remove redundant field in the rbac.yaml (https://github.com/kubernetes-retired/external-storage/pull/970)
 - Use `kubernetes-sigs/sig-storage-lib-external-provisioner` instead of `incubator/external-storage/lib` (https://github.com/kubernetes-retired/external-storage/pull/1026)
