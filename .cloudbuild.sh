@@ -1,1 +1,0 @@
-./release-tools/cloudbuild.sh
