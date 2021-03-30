@@ -1,5 +1,7 @@
-# v4.0.1
+# v4.0.2
 - Add arm7 (32bit) support (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/58)
+
+# v4.0.1
 - Preserve name of the PV directory name during archiving (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/59)
 
 # v4.0.0
