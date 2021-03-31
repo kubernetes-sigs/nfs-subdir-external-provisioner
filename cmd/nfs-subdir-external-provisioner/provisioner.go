@@ -104,8 +104,10 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	pathPattern, exists := options.StorageClass.Parameters["pathPattern"]
 	if exists {
 		customPath := metadata.stringParser(pathPattern)
-		path = filepath.Join(p.path, customPath)
-		fullPath = filepath.Join(mountPath, customPath)
+		if customPath != "" {
+			path = filepath.Join(p.path, customPath)
+			fullPath = filepath.Join(mountPath, customPath)
+		}
 	}
 
 	glog.V(4).Infof("creating path %s", fullPath)
