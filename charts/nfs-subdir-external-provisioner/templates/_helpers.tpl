@@ -67,6 +67,7 @@ Common labels
 {{- define "nfs-subdir-external-provisioner.labels" -}}
 chart: {{ template "nfs-subdir-external-provisioner.chart" . }}
 heritage: {{ .Release.Service }}
+{{ include "nfs-subdir-external-provisioner.selectorLabels" . }}
 {{- with .Values.labels }}
 {{- toYaml . | nindent 0 }}
 {{- end }}
