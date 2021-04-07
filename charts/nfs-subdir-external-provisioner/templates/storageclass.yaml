@@ -20,6 +20,9 @@ parameters:
   {{- if .Values.storageClass.pathPattern }}
   pathPattern: "{{ .Values.storageClass.pathPattern }}"
   {{- end }}
+  {{- if .Values.storageClass.onDelete }}
+  onDelete: "{{ .Values.storageClass.onDelete }}"
+  {{- end }}
 {{- if .Values.nfs.mountOptions }}
 mountOptions:
   {{- range .Values.nfs.mountOptions }}

@@ -3,7 +3,7 @@ strategyType: Recreate
 
 image:
   repository: gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner
-  tag: v4.0.0
+  tag: v4.0.2
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
@@ -35,6 +35,11 @@ storageClass:
 
   # When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.
   archiveOnDelete: true
+
+  # If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.
+  # Overrides archiveOnDelete.
+  # Ignored if value not set.
+  onDelete:
 
   # Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.
   # Ignored if value not set.
