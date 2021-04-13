@@ -5,13 +5,13 @@ metadata:
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
   name: {{ .Values.storageClass.name }}
-{{- if .Values.storageClass.defaultClass }}
   annotations:
+  {{- if .Values.storageClass.defaultClass }}
     storageclass.kubernetes.io/is-default-class: "true"
+  {{- end }}
   {{- with .Values.storageClass.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- end }}
 provisioner: {{ template "nfs-subdir-external-provisioner.provisionerName" . }}
 allowVolumeExpansion: {{ .Values.storageClass.allowVolumeExpansion }}
 reclaimPolicy: {{ .Values.storageClass.reclaimPolicy }}
