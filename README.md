@@ -43,6 +43,7 @@ resources:
 **Step 3: Create namespace resource**
 
 Create a file with your namespace resource. The name can be anything as it will get overwritten by the namespace in your kustomization file.
+
 ```yaml
 # namespace.yaml
 apiVersion: v1
@@ -85,6 +86,7 @@ Replace occurrences of `<YOUR_NFS_SERVER_IP>` and `<YOUR_NFS_SERVER_SHARE>` with
 **Step 5: Add resources and deploy**
 
 Add the namespace resource and patch you created in earlier steps.
+
 ```yaml
 namespace: nfs-provisioner
 resources:
@@ -93,7 +95,9 @@ resources:
 patchesStrategicMerge:
   - patch_nfs_details.yaml
 ```
+
 Deploy (run inside folder with your kustomization file):
+
 ```sh 
 kubectl -k .
 ```
