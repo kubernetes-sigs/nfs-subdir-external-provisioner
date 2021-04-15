@@ -114,6 +114,8 @@ $ kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir
 
 Now check your NFS Server for the `SUCCESS` inside the PVC's directory.
 
+Delete the test resources:
+
 ```sh
 $ kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
 ```
