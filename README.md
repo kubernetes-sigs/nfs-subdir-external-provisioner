@@ -24,7 +24,119 @@ $ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/n
     --set nfs.path=/exported/path
 ```
 
-### Without Helm
+### With Kustomize
+
+**Step 1: Get connection information for your NFS server**
+
+Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.   
+
+**Step 2: Add the base resource**
+
+Create a `kustomization.yaml` file in a directory of your choice, and add the [deploy](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/tree/master/deploy) directory as a resource. This will use the kustomization file within that folder as our base.
+
+```yaml
+namespace: nfs-provisioner
+resources:
+  - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
+```
+
+**Step 3: Create namespace resource**
+
+Create a file with your namespace resource. The name can be anything as it will get overwritten by the namespace in your kustomization file.
+```yaml
+# namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nfs-provisioner
+```
+
+**Step 4: Configure deployment**
+
+To configure the deployment, you will need to patch the it's container variables with the connection information for your NFS Server. 
+
+```yaml
+# patch_nfs_details.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nfs-client-provisioner
+  name: nfs-client-provisioner
+spec:
+  template:
+    spec:
+      containers:
+        - name: nfs-client-provisioner
+          env:
+            - name: NFS_SERVER
+              value: <YOUR_NFS_SERVER_IP>
+            - name: NFS_PATH
+              value: <YOUR_NFS_SERVER_SHARE>
+      volumes:
+        - name: nfs-client-root
+          nfs: 
+            server: <YOUR_NFS_SERVER_IP>
+            path: <YOUR_NFS_SERVER_SHARE>
+```
+
+Replace occurrences of `<YOUR_NFS_SERVER_IP>` and `<YOUR_NFS_SERVER_SHARE>` with your connection information.
+
+**Step 5: Add resources and deploy**
+
+Add the namespace resource and patch you created in earlier steps.
+```yaml
+namespace: nfs-provisioner
+resources:
+  - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
+  - namespace.yaml
+patchesStrategicMerge:
+  - patch_nfs_details.yaml
+```
+Deploy (run inside folder with your kustomization file):
+```sh 
+kubectl -k .
+```
+
+**Step 6: Finally, test your environment!**
+
+Now we'll test your NFS subdir external provisioner.
+
+Deploy:
+
+```sh
+$ kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
+```
+
+Now check your NFS Server for the file `SUCCESS`.
+
+```sh
+$ kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
+```
+
+Now check the folder has been deleted.
+
+**Step 7: Deploying your own PersistentVolumeClaims**
+
+To deploy your own PVC, make sure that you have the correct `storageClassName` (by default `managed-nfs-storage`). You can also patch the StorageClass resource to change it, like so:
+
+```yaml
+# kustomization.yaml
+namespace: nfs-provisioner
+resources:
+  - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
+  - namespace.yaml
+patches:
+- target:
+    kind: StorageClass
+    name: managed-nfs-storage
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: <YOUR-STORAGECLASS-NAME>
+```
+
+### Manually
 
 **Step 1: Get connection information for your NFS server**
 
