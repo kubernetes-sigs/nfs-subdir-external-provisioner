@@ -28,11 +28,11 @@ $ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/n
 
 **Step 1: Get connection information for your NFS server**
 
-Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.
+Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname and exported share path.
 
 **Step 2: Add the base resource**
 
-Create a `kustomization.yaml` file in a directory of your choice, and add the [deploy](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/tree/master/deploy) directory as a resource. This will use the kustomization file within that folder as our base.
+Create a `kustomization.yaml` file in a directory of your choice, and add the [deploy](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/tree/master/deploy) directory as a resource. This will use the kustomization file within that directory as our base.
 
 ```yaml
 namespace: nfs-provisioner
@@ -54,7 +54,7 @@ metadata:
 
 **Step 4: Configure deployment**
 
-To configure the deployment, you will need to patch the it's container variables with the connection information for your NFS Server.
+To configure the deployment, you will need to patch it's container variables with the connection information for your NFS Server.
 
 ```yaml
 # patch_nfs_details.yaml
@@ -96,7 +96,7 @@ patchesStrategicMerge:
   - patch_nfs_details.yaml
 ```
 
-Deploy (run inside folder with your kustomization file):
+Deploy (run inside directory with your kustomization file):
 
 ```sh
 kubectl -k .
@@ -104,21 +104,21 @@ kubectl -k .
 
 **Step 6: Finally, test your environment!**
 
-Now we'll test your NFS subdir external provisioner.
+Now we'll test your NFS subdir external provisioner by creating a persistent volume claim and a pod that writes a test file to the volume. This will make sure that the provisioner is provisioning and that the NFS server is reachable and writable.
 
-Deploy:
+Deploy the test resources:
 
 ```sh
 $ kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
 ```
 
-Now check your NFS Server for the file `SUCCESS`.
+Now check your NFS Server for the `SUCCESS` inside the PVC's directory.
 
 ```sh
 $ kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
 ```
 
-Now check the folder has been deleted.
+Now check the PVC's directory has been deleted.
 
 **Step 7: Deploying your own PersistentVolumeClaims**
 
