@@ -3,7 +3,7 @@
 **NFS subdir external provisioner** is an automatic provisioner that use your _existing and already configured_ NFS server to support dynamic provisioning of Kubernetes Persistent Volumes via Persistent Volume Claims. Persistent volumes are provisioned as `${namespace}-${pvcName}-${pvName}`.
 
 Note: This repository is migrated from https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client. As part of the migration:
-- The container image name and repository has changed to `gcr.io/k8s-staging-sig-storage` and `nfs-subdir-external-provisioner` respectively. 
+- The container image name and repository has changed to `gcr.io/k8s-staging-sig-storage` and `nfs-subdir-external-provisioner` respectively.
 - To maintain backward compatibility with earlier deployment files, the naming of NFS Client Provisioner is retained as `nfs-client-provisioner` in the deployment YAMLs.
 - One of the pending areas for development on this repository is to add automated e2e tests. If you would like to contribute, please raise an issue or reach us on the Kubernetes slack #sig-storage channel.
 
@@ -28,7 +28,7 @@ $ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/n
 
 **Step 1: Get connection information for your NFS server**
 
-Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.   
+Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname.
 
 **Step 2: Add the base resource**
 
@@ -54,7 +54,7 @@ metadata:
 
 **Step 4: Configure deployment**
 
-To configure the deployment, you will need to patch the it's container variables with the connection information for your NFS Server. 
+To configure the deployment, you will need to patch the it's container variables with the connection information for your NFS Server.
 
 ```yaml
 # patch_nfs_details.yaml
@@ -76,7 +76,7 @@ spec:
               value: <YOUR_NFS_SERVER_SHARE>
       volumes:
         - name: nfs-client-root
-          nfs: 
+          nfs:
             server: <YOUR_NFS_SERVER_IP>
             path: <YOUR_NFS_SERVER_SHARE>
 ```
@@ -98,7 +98,7 @@ patchesStrategicMerge:
 
 Deploy (run inside folder with your kustomization file):
 
-```sh 
+```sh
 kubectl -k .
 ```
 
@@ -298,7 +298,7 @@ To build your own custom container image from this repository, you will have to 
 ```sh
 make build
 make container
-# `nfs-subdir-external-provisioner:latest` will be created. 
+# `nfs-subdir-external-provisioner:latest` will be created.
 # Note: This will build a single-arch image that matches the machine on which container is built.
 # To upload this to your custom registry, say `quay.io/myorg` and arch as amd64, you can use
 # docker tag nfs-subdir-external-provisioner:latest quay.io/myorg/nfs-subdir-external-provisioner-amd64:latest
