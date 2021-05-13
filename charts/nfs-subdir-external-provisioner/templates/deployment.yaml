@@ -21,7 +21,7 @@ spec:
         scheduler.alpha.kubernetes.io/tolerations: '{{ toJson .Values.tolerations }}'
       {{- end }}
       labels:
-        {{- include "nfs-subdir-external-provisioner.selectorLabels" . | nindent 8 }}
+        {{- include "nfs-subdir-external-provisioner.podLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ template "nfs-subdir-external-provisioner.serviceAccountName" . }}
       {{- if .Values.nodeSelector }}

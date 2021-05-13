@@ -74,6 +74,16 @@ heritage: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Pod template labels
+*/}}
+{{- define "nfs-subdir-external-provisioner.podLabels" -}}
+{{ include "nfs-subdir-external-provisioner.selectorLabels" . }}
+{{- with .Values.labels }}
+{{- toYaml . | nindent 0 }}
+{{- end }}
+{{- end }}
+
+{{/*
 Selector labels
 */}}
 {{- define "nfs-subdir-external-provisioner.selectorLabels" -}}
