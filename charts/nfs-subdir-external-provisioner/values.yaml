@@ -74,6 +74,10 @@ podAnnotations: {}
 ## Set pod priorityClassName
 # priorityClassName: ""
 
+podSecurityContext: {}
+
+securityContext: {}
+
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
