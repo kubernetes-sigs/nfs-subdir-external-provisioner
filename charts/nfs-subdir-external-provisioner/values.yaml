@@ -11,6 +11,7 @@ nfs:
   server:
   path: /nfs-storage
   mountOptions:
+  volumeName: nfs-subdir-external-provisioner-root
 
 # For creating the StorageClass automatically:
 storageClass:

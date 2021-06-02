@@ -44,7 +44,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
-            - name: nfs-subdir-external-provisioner-root
+            - name: {{ .Values.nfs.volumeName }}
               mountPath: /persistentvolumes
           env:
             - name: PROVISIONER_NAME
@@ -62,7 +62,7 @@ spec:
 {{ toYaml . | indent 12 }}
           {{- end }}
       volumes:
-        - name: nfs-subdir-external-provisioner-root
+        - name: {{ .Values.nfs.volumeName }}
 {{- if .Values.buildMode }}
           emptyDir: {}
 {{- else if .Values.nfs.mountOptions }}
