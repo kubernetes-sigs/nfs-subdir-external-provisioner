@@ -206,4 +206,6 @@ The pipeline adds several labels:
 * You also need to provide the `DOCKER_IMAGE` secret specifying your Docker image name, e.g., `quay.io/[username]/nfs-subdir-external-provisioner`.
 
 
-
+## NFS limitations
+* The provisioned storage limit is not enforced. An application can expand to use all the available storage regardless of the provisioned size.
+* Storage resize/expansion operations are therefore also not supported. You will get an error: `Ignoring the PVC: didn't find a plugin capable of expanding the volume; waiting for an external controller to process this PVC.`
