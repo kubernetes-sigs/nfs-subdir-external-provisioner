@@ -70,6 +70,7 @@ The following tables lists the configurable parameters of this chart and their d
 | `nfs.server`                        | Hostname of the NFS server (required)                                                                 | null (ip or hostname)                                    |
 | `nfs.path`                          | Basepath of the mount point to be used                                                                | `/nfs-storage`                                           |
 | `nfs.mountOptions`                  | Mount options (e.g. 'nfsvers=3')                                                                      | null                                                     |
+| `nfs.volumeName`                    | Volume name used inside the pods                                                                      | `nfs-subdir-external-provisioner-root`                   |
 | `resources`                         | Resources required (e.g. CPU, memory)                                                                 | `{}`                                                     |
 | `rbac.create`                       | Use Role-based Access Control                                                                         | `true`                                                   |
 | `podSecurityPolicy.enabled`         | Create & use Pod Security Policy resources                                                            | `false`                                                  |
