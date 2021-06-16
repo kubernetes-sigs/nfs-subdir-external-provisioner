@@ -2,14 +2,16 @@ replicaCount: 1
 strategyType: Recreate
 
 image:
-  repository: gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner
-  tag: v4.0.0
+  repository: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner
+  tag: v4.0.2
   pullPolicy: IfNotPresent
+imagePullSecrets: []
 
 nfs:
   server:
   path: /nfs-storage
   mountOptions:
+  volumeName: nfs-subdir-external-provisioner-root
 
 # For creating the StorageClass automatically:
 storageClass:
@@ -35,12 +37,20 @@ storageClass:
   # When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.
   archiveOnDelete: true
 
+  # If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.
+  # Overrides archiveOnDelete.
+  # Ignored if value not set.
+  onDelete:
+
   # Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.
   # Ignored if value not set.
   pathPattern:
 
   # Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany
   accessModes: ReadWriteOnce
+
+  # Storage class annotations
+  annotations: {}
 
 leaderElection:
   # When set to false leader election will be disabled
@@ -61,12 +71,18 @@ scc:
 podSecurityPolicy:
   enabled: false
 
+# Deployment pod annotations
+podAnnotations: {}
+
 ## Set pod priorityClassName
 # priorityClassName: ""
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
+
+  # Annotations to add to the service account
+  annotations: {}
 
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
@@ -85,3 +101,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Additional labels for any resource created
+labels: {}

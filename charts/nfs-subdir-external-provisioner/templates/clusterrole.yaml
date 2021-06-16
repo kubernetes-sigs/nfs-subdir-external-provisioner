@@ -3,12 +3,12 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
-    app: {{ template "nfs-subdir-external-provisioner.name" . }}
-    chart: {{ template "nfs-subdir-external-provisioner.chart" . }}
-    heritage: {{ .Release.Service }}
-    release: {{ .Release.Name }}
+    {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
   name: {{ template "nfs-subdir-external-provisioner.fullname" . }}-runner
 rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "create", "delete"]
