@@ -99,7 +99,7 @@ patchesStrategicMerge:
 Deploy (run inside directory with your kustomization file):
 
 ```sh
-kubectl -k .
+kubectl apply -k .
 ```
 
 **Step 6: Finally, test your environment!**
