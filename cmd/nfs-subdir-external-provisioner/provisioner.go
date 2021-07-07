@@ -110,11 +110,33 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 		}
 	}
 
-	glog.V(4).Infof("creating path %s", fullPath)
-	if err := os.MkdirAll(fullPath, 0777); err != nil {
+	createMode := os.FileMode(0777)
+	annotationCreateMode, exists := metadata.annotations["nfs.io/createMode"]
+    if exists {
+        annotationCreateModeUInt, _ := strconv.ParseUint(annotationCreateMode, 8, 32)
+        createMode = os.FileMode(annotationCreateModeUInt)
+    }
+
+    createUID := "0"
+    annotationCreateUID, exists := metadata.annotations["nfs.io/createUID"]
+    if exists {
+        createUID = annotationCreateUID
+    }
+    createGID := "0"
+    annotationCreateGID, exists := metadata.annotations["nfs.io/createGID"]
+    if exists {
+        createGID = annotationCreateGID
+    }
+
+    uid, _ := strconv.Atoi(createUID)
+    gid, _ := strconv.Atoi(createGID)
+
+    glog.V(4).Infof("creating path %s with %#o mode, %d UID, %d GID", fullPath, createMode, uid, gid)
+	if err := os.MkdirAll(fullPath, createMode); err != nil {
 		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
-	os.Chmod(fullPath, 0777)
+	os.Chmod(fullPath, createMode)
+	os.Chown(fullPath, uid, gid)
 
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
