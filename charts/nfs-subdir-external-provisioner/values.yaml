@@ -42,8 +42,14 @@ storageClass:
   # Ignored if value not set.
   onDelete:
 
+  # If the directory path should have a suffix to nfs.path
+  # If true, it will use either storageClass.pathPattern or ${namespace}-${pvcName}-${pvName}
+  # If false, it will not add any suffix to nfs.path regardless of storageClass.pathPattern
+  withPathSuffix: true
+
   # Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.
   # Ignored if value not set.
+  # If storageClass.withPathSuffix is false, pathPattern will be ignored even if it is set
   pathPattern:
 
   # Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany

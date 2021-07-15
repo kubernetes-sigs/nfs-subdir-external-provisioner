@@ -17,6 +17,7 @@ allowVolumeExpansion: {{ .Values.storageClass.allowVolumeExpansion }}
 reclaimPolicy: {{ .Values.storageClass.reclaimPolicy }}
 parameters:
   archiveOnDelete: "{{ .Values.storageClass.archiveOnDelete }}"
+  withPathSuffix: "{{ .Values.storageClass.withPathSuffix }}"
   {{- if .Values.storageClass.pathPattern }}
   pathPattern: "{{ .Values.storageClass.pathPattern }}"
   {{- end }}
