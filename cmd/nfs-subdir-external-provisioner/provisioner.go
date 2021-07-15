@@ -102,7 +102,21 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	path := filepath.Join(p.path, pvName)
 
 	pathPattern, exists := options.StorageClass.Parameters["pathPattern"]
-	if exists {
+	withPathSuffix, existsWithPathSuffix := options.StorageClass.Parameters["withPathSuffix"]
+	// default is true
+	withPathSuffixBool := true
+	if existsWithPathSuffix {
+	    var err error
+		withPathSuffixBool, err = strconv.ParseBool(withPathSuffix)
+		if err != nil {
+			return nil, controller.ProvisioningFinished, fmt.Errorf("storageClass.withPathSuffix is not a boolean value")
+		}
+	}
+	if !withPathSuffixBool {
+		path = p.path
+    	fullPath = mountPath
+	}
+	else if exists {
 		customPath := metadata.stringParser(pathPattern)
 		if customPath != "" {
 			path = filepath.Join(p.path, customPath)
