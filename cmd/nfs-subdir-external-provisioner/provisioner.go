@@ -112,26 +112,30 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 
 	createMode := os.FileMode(0777)
 	annotationCreateMode, exists := metadata.annotations["nfs.io/createMode"]
-    if exists {
-        annotationCreateModeUInt, _ := strconv.ParseUint(annotationCreateMode, 8, 32)
-        createMode = os.FileMode(annotationCreateModeUInt)
-    }
+	if exists {
+		annotationCreateModeUInt, err := strconv.ParseUint(annotationCreateMode, 8, 32)
+		if err != nil {
+			glog.Warningf("nfs.io/createMode %s not parsable, skipped", annotationCreateMode)
+		} else {
+			createMode = os.FileMode(annotationCreateModeUInt)
+		}
+	}
 
-    createUID := "0"
-    annotationCreateUID, exists := metadata.annotations["nfs.io/createUID"]
-    if exists {
-        createUID = annotationCreateUID
-    }
-    createGID := "0"
-    annotationCreateGID, exists := metadata.annotations["nfs.io/createGID"]
-    if exists {
-        createGID = annotationCreateGID
-    }
+	createUID := "0"
+	annotationCreateUID, exists := metadata.annotations["nfs.io/createUID"]
+	if exists {
+		createUID = annotationCreateUID
+	}
+	createGID := "0"
+	annotationCreateGID, exists := metadata.annotations["nfs.io/createGID"]
+	if exists {
+		createGID = annotationCreateGID
+	}
 
-    uid, _ := strconv.Atoi(createUID)
-    gid, _ := strconv.Atoi(createGID)
+	uid, _ := strconv.Atoi(createUID)
+	gid, _ := strconv.Atoi(createGID)
 
-    glog.V(4).Infof("creating path %s with %#o mode, %d UID, %d GID", fullPath, createMode, uid, gid)
+	glog.V(4).Infof("creating path %s with %#o mode, %d UID, %d GID", fullPath, createMode, uid, gid)
 	if err := os.MkdirAll(fullPath, createMode); err != nil {
 		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
