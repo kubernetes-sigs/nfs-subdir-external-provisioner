@@ -106,7 +106,7 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	// default is true
 	withPathSuffixBool := true
 	if existsWithPathSuffix {
-	    	var err error
+		var err error
 		withPathSuffixBool, err = strconv.ParseBool(withPathSuffix)
 		if err != nil {
 			return nil, controller.ProvisioningFinished, fmt.Errorf("storageClass.withPathSuffix is not a boolean value")
@@ -114,7 +114,7 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	}
 	if !withPathSuffixBool {
 		path = p.path
-    		fullPath = mountPath
+		fullPath = mountPath
 	} else if exists {
 		customPath := metadata.stringParser(pathPattern)
 		if customPath != "" {
