@@ -12,7 +12,7 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - {{ .Values.storageClass.accessModes }}
-  persistentVolumeReclaimPolicy: {{ .Values.storageClass.reclaimPolicy }}
+  persistentVolumeReclaimPolicy: {{ .Values.nfs.reclaimPolicy }}
   storageClassName: ""
   {{- if .Values.nfs.mountOptions }}
   mountOptions:

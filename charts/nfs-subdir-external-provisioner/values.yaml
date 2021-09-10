@@ -12,6 +12,7 @@ nfs:
   path: /nfs-storage
   mountOptions:
   volumeName: nfs-subdir-external-provisioner-root
+  reclaimPolicy: Delete # Reclaim policy for the main nfs volume
 
 # For creating the StorageClass automatically:
 storageClass:
