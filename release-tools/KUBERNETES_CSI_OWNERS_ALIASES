@@ -1,0 +1,45 @@
+# See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
+
+aliases:
+
+  # SIG-Storage chairs and leads should always have approval rights in all repos.
+  # Others may be added as needed here or in each repo.
+  kubernetes-csi-approvers:
+  - jsafrane
+  - msau42
+  - saad-ali
+  - xing-yang
+
+  # Reviewers are automatically assigned to new PRs. The following
+  # reviewers will be active in all repos. Other reviewers can be
+  # added in each repo.
+  #
+  # Reviewers are encouraged to set the "Busy" flag in their GitHub status
+  # when they are temporarily unable to review PRs.
+  kubernetes-csi-reviewers:
+  - andyzhangx
+  - chrishenzie
+  - ggriffiths
+  - gnufied
+  - humblec
+  - j-griffith
+  - Jiawei0227
+  - jingxu97
+  - jsafrane
+  - pohly
+  - xing-yang
+
+# This documents who previously contributed to Kubernetes-CSI
+# as approver.
+emeritus_approver:
+- lpabon
+- sbezverk
+- vladimirvivien
+
+# This documents who previously contributed to Kubernetes-CSI
+# as reviewer.
+emeritus_reviewer:
+- lpabon
+- saad-ali
+- sbezverk
+- vladimirvivien

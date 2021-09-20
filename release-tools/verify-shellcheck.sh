@@ -84,7 +84,7 @@ done < <(find . -name "*.sh" \
 # detect if the host machine has the required shellcheck version installed
 # if so, we will use that instead.
 HAVE_SHELLCHECK=false
-if which shellcheck &>/dev/null; then
+if command -v shellcheck &>/dev/null; then
   detected_version="$(shellcheck --version | grep 'version: .*')"
   if [[ "${detected_version}" = "version: ${SHELLCHECK_VERSION}" ]]; then
     HAVE_SHELLCHECK=true

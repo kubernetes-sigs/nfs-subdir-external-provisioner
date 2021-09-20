@@ -10,10 +10,10 @@
 #   because binaries will get built for different architectures and then
 #   get copied from the built host into the container image
 #
-# See https://github.com/kubernetes/test-infra/blob/master/config/jobs/image-pushing/README.md
+# See https://github.com/kubernetes/test-infra/blob/HEAD/config/jobs/image-pushing/README.md
 # for more details on image pushing process in Kubernetes.
 #
-# To promote release images, see https://github.com/kubernetes/k8s.io/tree/master/k8s.gcr.io/images/k8s-staging-sig-storage.
+# To promote release images, see https://github.com/kubernetes/k8s.io/tree/HEAD/k8s.gcr.io/images/k8s-staging-sig-storage.
 
 # This must be specified in seconds. If omitted, defaults to 600s (10 mins).
 # Building three images in external-snapshotter takes roughly half an hour,
@@ -25,9 +25,9 @@ options:
   substitution_option: ALLOW_LOOSE
 steps:
   # The image must contain bash and curl. Ideally it should also contain
-  # the desired version of Go (currently defined in release-tools/travis.yml),
+  # the desired version of Go (currently defined in release-tools/prow.sh),
   # but that just speeds up the build and is not required.
-  - name: 'gcr.io/k8s-testimages/gcb-docker-gcloud:v20200421-a2bf5f8'
+  - name: 'gcr.io/k8s-testimages/gcb-docker-gcloud:v20210331-c732583'
     entrypoint: ./.cloudbuild.sh
     env:
     - GIT_TAG=${_GIT_TAG}
