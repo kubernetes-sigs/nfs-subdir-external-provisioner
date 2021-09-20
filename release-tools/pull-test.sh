@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 
 # Copyright 2021 The Kubernetes Authors.
 #
@@ -14,7 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# shellcheck disable=SC1091
-. release-tools/prow.sh
+# This script is called by pull Prow jobs for the csi-release-tools
+# repo to ensure that the changes in the PR work when imported into
+# some other repo.
 
-gcr_cloud_build
+set -ex
+
+# It must be called inside the updated csi-release-tools repo.
+CSI_RELEASE_TOOLS_DIR="$(pwd)"
+
+# Update the other repo.
+cd "$PULL_TEST_REPO_DIR"
+git subtree pull --squash --prefix=release-tools "$CSI_RELEASE_TOOLS_DIR" master
+git log -n2
+
+# Now fall through to testing.
+exec ./.prow.sh

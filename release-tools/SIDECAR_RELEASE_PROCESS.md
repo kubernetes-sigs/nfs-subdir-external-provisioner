@@ -9,13 +9,8 @@ The release manager must:
 * Be a member of the kubernetes-csi organization. Open an
   [issue](https://github.com/kubernetes/org/issues/new?assignees=&labels=area%2Fgithub-membership&template=membership.md&title=REQUEST%3A+New+membership+for+%3Cyour-GH-handle%3E) in
   kubernetes/org to request membership
-* Be a top level approver for the repository. To become a top level approver,
-  the candidate must demonstrate ownership and deep knowledge of the repository
-  through active maintainence, responding to and fixing issues, reviewing PRs,
-  test triage.
-* Be part of the maintainers or admin group for the repository. admin is a
-  superset of maintainers, only maintainers level is required for cutting a
-  release.  Membership can be requested by submitting a PR to kubernetes/org.
+* Be part of the maintainers group for the repository.
+  Membership can be requested by submitting a PR to kubernetes/org.
   [Example](https://github.com/kubernetes/org/pull/1467)
 
 ## Updating CI Jobs
@@ -31,16 +26,16 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 1. "-on-master" jobs are the closest reflection to the new Kubernetes version.
 1. Fixes to our prow.sh CI script can be tested in the [CSI hostpath
    repo](https://github.com/kubernetes-csi/csi-driver-host-path) by modifying
-   [prow.sh](https://github.com/kubernetes-csi/csi-driver-host-path/blob/master/release-tools/prow.sh)
+   [prow.sh](https://github.com/kubernetes-csi/csi-driver-host-path/blob/HEAD/release-tools/prow.sh)
    along with any overrides in
-   [.prow.sh](https://github.com/kubernetes-csi/csi-driver-host-path/blob/master/.prow.sh)
+   [.prow.sh](https://github.com/kubernetes-csi/csi-driver-host-path/blob/HEAD/.prow.sh)
    to mirror the failing environment. Once e2e tests are passing (verify-unit tests
    will fail), then the prow.sh changes can be submitted to [csi-release-tools](https://github.com/kubernetes-csi/csi-release-tools).
 1. Changes can then be updated in all the sidecar repos and hostpath driver repo
    by following the [update
-   instructions](https://github.com/kubernetes-csi/csi-release-tools/blob/master/README.md#sharing-and-updating).
+   instructions](https://github.com/kubernetes-csi/csi-release-tools/blob/HEAD/README.md#sharing-and-updating).
 1. New pull and CI jobs are configured by adding new K8s versions to the top of
-   [gen-jobs.sh](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-csi/gen-jobs.sh).
+   [gen-jobs.sh](https://github.com/kubernetes/test-infra/blob/HEAD/config/jobs/kubernetes-csi/gen-jobs.sh).
    New pull jobs that have been unverified should be initially made optional by
    setting the new K8s version as
    [experimental](https://github.com/kubernetes/test-infra/blob/a1858f46d6014480b130789df58b230a49203a64/config/jobs/kubernetes-csi/gen-jobs.sh#L40).
@@ -52,7 +47,7 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 1. Identify all issues and ongoing PRs that should go into the release, and
   drive them to resolution.
 1. Download v2.8+ [K8s release notes
-  generator](https://github.com/kubernetes/release/tree/master/cmd/release-notes)
+  generator](https://github.com/kubernetes/release/tree/HEAD/cmd/release-notes)
 1. Generate release notes for the release. Replace arguments with the relevant
   information.
     * Clean up old cached information (also needed if you are generating release
@@ -95,12 +90,56 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 1. Check [image build status](https://k8s-testgrid.appspot.com/sig-storage-image-build).
 1. Promote images from k8s-staging-sig-storage to k8s.gcr.io/sig-storage. From
    the [k8s image
-   repo](https://github.com/kubernetes/k8s.io/tree/master/k8s.gcr.io/images/k8s-staging-sig-storage),
+   repo](https://github.com/kubernetes/k8s.io/tree/HEAD/k8s.gcr.io/images/k8s-staging-sig-storage),
    run `./generate.sh > images.yaml`, and send a PR with the updated images.
    Once merged, the image promoter will copy the images from staging to prod.
 1. Update [kubernetes-csi/docs](https://github.com/kubernetes-csi/docs) sidecar
    and feature pages with the new released version.
 1. After all the sidecars have been released, update
-   CSI hostpath driver with the new sidecars in the [CSI repo](https://github.com/kubernetes-csi/csi-driver-host-path/tree/master/deploy)
+   CSI hostpath driver with the new sidecars in the [CSI repo](https://github.com/kubernetes-csi/csi-driver-host-path/tree/HEAD/deploy)
    and [k/k
-   in-tree](https://github.com/kubernetes/kubernetes/tree/master/test/e2e/testing-manifests/storage-csi/hostpath/hostpath)
+   in-tree](https://github.com/kubernetes/kubernetes/tree/HEAD/test/e2e/testing-manifests/storage-csi/hostpath/hostpath)
+
+## Adding support for a new Kubernetes release
+
+1. Add the new release to `k8s_versions` in
+   https://github.com/kubernetes/test-infra/blob/090dec5dd535d5f61b7ba52e671a810f5fc13dfd/config/jobs/kubernetes-csi/gen-jobs.sh#L25
+   to enable generating a job for it. Set `experimental_k8s_version`
+   in
+   https://github.com/kubernetes/test-infra/blob/090dec5dd535d5f61b7ba52e671a810f5fc13dfd/config/jobs/kubernetes-csi/gen-jobs.sh#L40
+   to ensure that the new jobs aren't run for PRs unless explicitly
+   requested. Generate and submit the new jobs.
+1. Create a test PR to try out the new job in some repo with `/test
+   pull-kubernetes-csi-<repo>-<x.y>-on-kubernetes-<x.y>` where x.y
+   matches the Kubernetes release. Alternatively, run .prow.sh in that
+   repo locally with `CSI_PROW_KUBERNETES_VERSION=x.y.z`.
+1. Optional: update to a [new
+   release](https://github.com/kubernetes-sigs/kind/tags) of kind with
+   pre-built images for the new Kubernetes release. This is optional
+   if the current version of kind is able to build images for the new
+   Kubernetes release. However, jobs require less resources when they
+   don't need to build those images from the Kubernetes source code.
+   This change needs to be tried out in a PR against a component
+   first, then get submitted against csi-release-tools.
+1. Optional: propagate the updated csi-release-tools to all components
+   with the script from
+   https://github.com/kubernetes-csi/csi-release-tools/issues/7#issuecomment-707025402
+1. Once it is likely to work in all components, unset
+   `experimental_k8s_version` and submit the updated jobs.
+1. Once all sidecars for the new Kubernetes release are released,
+   either bump the version number of the images in the existing
+   [csi-driver-host-path
+   deployments](https://github.com/kubernetes-csi/csi-driver-host-path/tree/HEAD/deploy)
+   and/or create a new deployment, depending on what Kubernetes
+   release an updated sidecar is compatible with. If no new deployment
+   is needed, then add a symlink to document that there intentionally
+   isn't a separate deployment. This symlink is not needed for Prow
+   testing because that will use "kubernetes-latest" as fallback.
+   Update that link when creating a new deployment.
+1. Create a new csi-driver-host-path release.
+1. Bump `CSI_PROW_DRIVER_VERSION` in prow.sh to that new release and
+   (eventually) roll that change out to all repos by updating
+   `release-tools` in them. This is used when testing manually. The
+   Prow jobs override that value, so also update
+   `hostpath_driver_version` in
+   https://github.com/kubernetes/test-infra/blob/91b04e6af3a40a9bcff25aa030850a4721e2dd2b/config/jobs/kubernetes-csi/gen-jobs.sh#L46-L47

@@ -55,6 +55,12 @@ mods=$( (set -x; curl --silent --show-error --fail "https://raw.githubuserconten
           sed -n 's|.*k8s.io/\(.*\) => ./staging/src/k8s.io/.*|k8s.io/\1|p'
    ) || die "failed to determine Kubernetes staging modules"
 for mod in $mods; do
+    if ! (env GO111MODULE=on go mod graph) | grep "$mod@" > /dev/null; then
+        echo "Kubernetes module $mod is not used, skipping"
+        # Remove the module from go.mod "replace" that was added by an older version of this script.
+        (set -x;  env GO111MODULE=on go mod edit "-dropreplace=$mod") || die "'go mod edit' failed"
+        continue
+    fi
     # The presence of a potentially incomplete go.mod file affects this command,
     # so move elsewhere.
     modinfo=$(set -x; cd /; env GO111MODULE=on go mod download -json "$mod@kubernetes-${k8s}") ||
