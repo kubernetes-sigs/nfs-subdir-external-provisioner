@@ -21,7 +21,11 @@ The expected repository layout is:
    Dockerfile in the root when only building a single command
  - `Makefile` - includes `release-tools/build.make` and sets
    configuration variables
- - `.travis.yml` - a symlink to `release-tools/.travis.yml`
+ - `.prow.sh` script which imports `release-tools/prow.sh`
+   and may contain further customization
+ - `.cloudbuild.sh` and `cloudbuild.yaml` as symlinks to
+   the corresponding files in `release-tools` or (if necessary)
+   as custom files
 
 To create a release, tag a certain revision with a name that
 starts with `v`, for example `v1.0.0`, then `make push`
@@ -38,16 +42,23 @@ images. Building from master creates the main `canary` image.
 Sharing and updating
 --------------------
 
-[`git subtree`](https://github.com/git/git/blob/master/contrib/subtree/git-subtree.txt)
+[`git subtree`](https://github.com/git/git/blob/HEAD/contrib/subtree/git-subtree.txt)
 is the recommended way of maintaining a copy of the rules inside the
 `release-tools` directory of a project. This way, it is possible to make
 changes also locally, test them and then push them back to the shared
 repository at a later time.
 
+We no longer care about importing the full commit history, so `--squash` should be used
+when submitting a `release-tools` update. Also make sure that the PR for that
+contains the automatically generated commit message in the PR description.
+It contains the list of individual commits that were squashed. The script from
+https://github.com/kubernetes-csi/csi-release-tools/issues/7 can create such
+PRs automatically.
+
 Cheat sheet:
 
-- `git subtree add --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - add release tools to a repo which does not have them yet (only once)
-- `git subtree pull --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - update local copy to latest upstream (whenever upstream changes)
+- `git subtree add --squash --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - add release tools to a repo which does not have them yet (only once)
+- `git subtree pull --squash --prefix=release-tools https://github.com/kubernetes-csi/csi-release-tools.git master` - update local copy to latest upstream (whenever upstream changes)
 - edit, `git commit`, `git subtree push --prefix=release-tools git@github.com:<user>/csi-release-tools.git <my-new-or-existing-branch>` - push to a new branch before submitting a PR
 
 verify-shellcheck.sh
@@ -78,7 +89,7 @@ main
 
 All Kubernetes-CSI repos are expected to switch to Prow. For details
 on what is enabled in Prow, see
-https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-csi
+https://github.com/kubernetes/test-infra/tree/HEAD/config/jobs/kubernetes-csi
 
 Test results for periodic jobs are visible in
 https://testgrid.k8s.io/sig-storage-csi-ci
