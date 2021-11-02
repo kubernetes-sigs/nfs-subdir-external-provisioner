@@ -141,7 +141,7 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 
 func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
-	basePath := strings.Replace(path, p.path, mountpath, 1)
+	basePath := strings.Replace(path, p.path, mountPath, 1)
 	oldPath := filepath.Join(mountPath, basePath)
 
 	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
