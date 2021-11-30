@@ -26,14 +26,43 @@ set -o pipefail
 cmd=$0
 
 function help () {
-    echo "$cmd <kubernetes version = x.y.z> - update all components from kubernetes/kubernetes to that version"
+    cat <<EOF
+$cmd -p <kubernetes version = x.y.z>
+
+Update all components from kubernetes/kubernetes to that version.
+
+By default, replace statements are added for all Kubernetes packages,
+whether they are used or not.  This is useful when preparing a
+repository for using k8s.io/kubernetes, because those replace
+statements are needed to avoid "unknown revision v0.0.0" errors
+(https://github.com/kubernetes/kubernetes/issues/79384).
+
+With the optional -p flag, all unused replace statements are
+pruned. This makes go.mod smaller, but isn't required.
+
+The replace statements are needed for "go get -u ./..." which
+otherwise ends up updating Kubernetes packages like client-go to
+incompatible versions (in that case, a very old 1.x release which
+happens to have a "higher" version number than the current
+0.<Kubernetes minor version>.<Kubernetes patch version> numbers.
+EOF
 }
+
+prune=false
+
+while getopts "ph" o; do
+    case "$o" in
+        h) help; exit 0;;
+        p) prune=true;;
+        *) help; exit 1;;
+    esac
+done
+shift $((OPTIND-1))
 
 if [ $# -ne 1 ]; then
     help
     exit 1
 fi
-case "$1" in -h|--help|help) help; exit 0;; esac
 
 die () {
     echo >&2 "$@"
@@ -55,7 +84,7 @@ mods=$( (set -x; curl --silent --show-error --fail "https://raw.githubuserconten
           sed -n 's|.*k8s.io/\(.*\) => ./staging/src/k8s.io/.*|k8s.io/\1|p'
    ) || die "failed to determine Kubernetes staging modules"
 for mod in $mods; do
-    if ! (env GO111MODULE=on go mod graph) | grep "$mod@" > /dev/null; then
+    if $prune && ! (env GO111MODULE=on go mod graph) | grep "$mod@" > /dev/null; then
         echo "Kubernetes module $mod is not used, skipping"
         # Remove the module from go.mod "replace" that was added by an older version of this script.
         (set -x;  env GO111MODULE=on go mod edit "-dropreplace=$mod") || die "'go mod edit' failed"
