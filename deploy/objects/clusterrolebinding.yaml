@@ -5,6 +5,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: nfs-client-provisioner
+    # replace with namespace where provisioner is deployed
     namespace: default
 roleRef:
   kind: ClusterRole
