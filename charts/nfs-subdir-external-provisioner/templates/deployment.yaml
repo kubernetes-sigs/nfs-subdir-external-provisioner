@@ -24,6 +24,8 @@ spec:
         {{- include "nfs-subdir-external-provisioner.podLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ template "nfs-subdir-external-provisioner.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- if .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
@@ -43,6 +45,8 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
           volumeMounts:
             - name: {{ .Values.nfs.volumeName }}
               mountPath: /persistentvolumes

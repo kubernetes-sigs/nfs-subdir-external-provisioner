@@ -1,11 +1,18 @@
+apiVersion: apps/v1
 kind: Deployment
-apiVersion: extensions/v1beta1
 metadata:
   name: nfs-client-provisioner
+  labels:
+    app: nfs-client-provisioner
+  # replace with namespace where provisioner is deployed
+  namespace: default
 spec:
   replicas: 1
   strategy:
     type: Recreate
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
   template:
     metadata:
       labels:
@@ -22,11 +29,11 @@ spec:
             - name: PROVISIONER_NAME
               value: k8s-sigs.io/nfs-subdir-external-provisioner
             - name: NFS_SERVER
-              value: 10.10.10.60
+              value: 10.3.243.101
             - name: NFS_PATH
               value: /ifs/kubernetes
       volumes:
         - name: nfs-client-root
           nfs:
-            server: 10.10.10.60
+            server: 10.3.243.101
             path: /ifs/kubernetes
