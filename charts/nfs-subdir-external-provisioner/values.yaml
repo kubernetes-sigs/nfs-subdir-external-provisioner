@@ -12,6 +12,8 @@ nfs:
   path: /nfs-storage
   mountOptions:
   volumeName: nfs-subdir-external-provisioner-root
+  # Reclaim policy for the main nfs volume
+  reclaimPolicy: Retain
 
 # For creating the StorageClass automatically:
 storageClass:
@@ -71,6 +73,10 @@ podAnnotations: {}
 
 ## Set pod priorityClassName
 # priorityClassName: ""
+
+podSecurityContext: {}
+
+securityContext: {}
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
