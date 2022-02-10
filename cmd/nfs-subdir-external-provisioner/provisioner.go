@@ -112,10 +112,10 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	}
 
 	glog.V(4).Infof("creating path %s", fullPath)
-	if err := os.MkdirAll(fullPath, 0777); err != nil {
+	if err := os.MkdirAll(fullPath, 0o777); err != nil {
 		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
-	err := os.Chmod(fullPath, 0777)
+	err := os.Chmod(fullPath, 0o777)
 	if err != nil {
 		return nil, "", err
 	}
@@ -159,14 +159,12 @@ func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume
 	}
 
 	// Determine if the "onDelete" parameter exists.
-	// If it exists and has a delete value, delete the directory.
-	// If it exists and has a retain value, safe the directory.
+	// If it exists and has a `delete` value, delete the directory.
+	// If it exists and has a `retain` value, safe the directory.
 	onDelete := storageClass.Parameters["onDelete"]
 	switch onDelete {
-
 	case "delete":
 		return os.RemoveAll(oldPath)
-
 	case "retain":
 		return nil
 	}
@@ -190,7 +188,7 @@ func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume
 	return os.Rename(oldPath, archivePath)
 }
 
-// getClassForVolume returns StorageClass
+// getClassForVolume returns StorageClass.
 func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *v1.PersistentVolume) (*storage.StorageClass, error) {
 	if p.client == nil {
 		return nil, fmt.Errorf("cannot get kube client")
@@ -203,6 +201,7 @@ func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *v1.Persisten
 	if err != nil {
 		return nil, err
 	}
+
 	return class, nil
 }
 
