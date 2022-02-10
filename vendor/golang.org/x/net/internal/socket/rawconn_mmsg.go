@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build linux
 // +build linux
 
 package socket
@@ -9,26 +10,24 @@ package socket
 import (
 	"net"
 	"os"
-	"syscall"
 )
 
 func (c *Conn) recvMsgs(ms []Message, flags int) (int, error) {
-	hs := make(mmsghdrs, len(ms))
+	for i := range ms {
+		ms[i].raceWrite()
+	}
+	packer := defaultMmsghdrsPool.Get()
+	defer defaultMmsghdrsPool.Put(packer)
 	var parseFn func([]byte, string) (net.Addr, error)
 	if c.network != "tcp" {
 		parseFn = parseInetAddr
 	}
-	if err := hs.pack(ms, parseFn, nil); err != nil {
-		return 0, err
-	}
+	hs := packer.pack(ms, parseFn, nil)
 	var operr error
 	var n int
 	fn := func(s uintptr) bool {
 		n, operr = recvmmsg(s, hs, flags)
-		if operr == syscall.EAGAIN {
-			return false
-		}
-		return true
+		return ioComplete(flags, operr)
 	}
 	if err := c.c.Read(fn); err != nil {
 		return n, err
@@ -43,22 +42,21 @@ func (c *Conn) recvMsgs(ms []Message, flags int) (int, error) {
 }
 
 func (c *Conn) sendMsgs(ms []Message, flags int) (int, error) {
-	hs := make(mmsghdrs, len(ms))
-	var marshalFn func(net.Addr) []byte
+	for i := range ms {
+		ms[i].raceRead()
+	}
+	packer := defaultMmsghdrsPool.Get()
+	defer defaultMmsghdrsPool.Put(packer)
+	var marshalFn func(net.Addr, []byte) int
 	if c.network != "tcp" {
 		marshalFn = marshalInetAddr
 	}
-	if err := hs.pack(ms, nil, marshalFn); err != nil {
-		return 0, err
-	}
+	hs := packer.pack(ms, nil, marshalFn)
 	var operr error
 	var n int
 	fn := func(s uintptr) bool {
 		n, operr = sendmmsg(s, hs, flags)
-		if operr == syscall.EAGAIN {
-			return false
-		}
-		return true
+		return ioComplete(flags, operr)
 	}
 	if err := c.c.Write(fn); err != nil {
 		return n, err
