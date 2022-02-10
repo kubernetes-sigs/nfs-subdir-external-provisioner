@@ -62,13 +62,14 @@ func (meta *pvcMetadata) stringParser(str string) string {
 	for _, r := range result {
 		switch r[2] {
 		case "labels":
-			str = strings.Replace(str, r[0], meta.labels[r[3]], -1)
+			str = strings.ReplaceAll(str, r[0], meta.labels[r[3]])
 		case "annotations":
-			str = strings.Replace(str, r[0], meta.annotations[r[3]], -1)
+			str = strings.ReplaceAll(str, r[0], meta.annotations[r[3]])
 		default:
-			str = strings.Replace(str, r[0], meta.data[r[1]], -1)
+			str = strings.ReplaceAll(str, r[0], meta.data[r[1]])
 		}
 	}
+
 	return str
 }
 
@@ -114,7 +115,10 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	if err := os.MkdirAll(fullPath, 0777); err != nil {
 		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
-	os.Chmod(fullPath, 0777)
+	err := os.Chmod(fullPath, 0777)
+	if err != nil {
+		return nil, "", err
+	}
 
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
@@ -189,11 +193,11 @@ func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume
 // getClassForVolume returns StorageClass
 func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *v1.PersistentVolume) (*storage.StorageClass, error) {
 	if p.client == nil {
-		return nil, fmt.Errorf("Cannot get kube client")
+		return nil, fmt.Errorf("cannot get kube client")
 	}
 	className := helper.GetPersistentVolumeClass(pv)
 	if className == "" {
-		return nil, fmt.Errorf("Volume has no storage class")
+		return nil, fmt.Errorf("volume has no storage class")
 	}
 	class, err := p.client.StorageV1().StorageClasses().Get(ctx, className, metav1.GetOptions{})
 	if err != nil {
