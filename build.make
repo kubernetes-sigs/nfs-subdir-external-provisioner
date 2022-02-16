@@ -70,7 +70,7 @@ endif
 # Specific packages can be excluded from each of the tests below by setting the *_FILTER_CMD variables
 # to something like "| grep -v 'github.com/kubernetes-csi/project/pkg/foobar'". See usage below.
 
-# BUILD_PLATFORMS contains a set of tuples [os arch suffix base_image addon_image]
+# BUILD_PLATFORMS contains a set of tuples [os arch buildx_platform suffix base_image addon_image]
 # separated by semicolon. An empty variable or empty entry (= just a
 # semicolon) builds for the default platform of the current Go
 # toolchain.
@@ -85,12 +85,12 @@ FULL_LDFLAGS = $(LDFLAGS) $(IMPORTPATH_LDFLAGS) $(EXT_LDFLAGS)
 # defined by BUILD_PLATFORMS.
 $(CMDS:%=build-%): build-%: check-go-version-go
 	mkdir -p bin
-	# os_arch_seen captures all of the $$os-$$arch seen for the current binary
-	# that we want to build, if we've seen an $$os-$$arch before it means that
+	# os_arch_seen captures all of the $$os-$$arch-$$buildx_platform seen for the current binary
+	# that we want to build, if we've seen an $$os-$$arch-$$buildx_platform before it means that
 	# we don't need to build it again, this is done to avoid building
 	# the windows binary multiple times (see the default value of $$BUILD_PLATFORMS)
-	export os_arch_seen="" && echo '$(BUILD_PLATFORMS)' | tr ';' '\n' | while read -r os arch suffix base_image addon_image; do \
-		os_arch_seen_pre=$${os_arch_seen%%$$os-$$arch*}; \
+	export os_arch_seen="" && echo '$(BUILD_PLATFORMS)' | tr ';' '\n' | while read -r os arch buildx_platform suffix base_image addon_image; do \
+		os_arch_seen_pre=$${os_arch_seen%%$$os-$$arch-$$buildx_platform*}; \
 		if ! [ $${#os_arch_seen_pre} = $${#os_arch_seen} ]; then \
 			continue; \
 		fi; \
@@ -98,7 +98,7 @@ $(CMDS:%=build-%): build-%: check-go-version-go
 			echo "Building $* for GOOS=$$os GOARCH=$$arch failed, see error(s) above."; \
 			exit 1; \
 		fi; \
-		os_arch_seen+=";$$os-$$arch"; \
+		os_arch_seen+=";$$os-$$arch-$$buildx_platform"; \
 	done
 
 $(CMDS:%=container-%): container-%: build-%
@@ -154,16 +154,17 @@ $(CMDS:%=push-multiarch-%): push-multiarch-%: check-pull-base-ref build-%
 	dockerfile_windows=$$(if [ -e ./$(CMDS_DIR)/$*/Dockerfile.Windows ]; then echo ./$(CMDS_DIR)/$*/Dockerfile.Windows; else echo Dockerfile.Windows; fi); \
 	if [ '$(BUILD_PLATFORMS)' ]; then build_platforms='$(BUILD_PLATFORMS)'; else build_platforms="linux amd64"; fi; \
 	if ! [ -f "$$dockerfile_windows" ]; then \
-		build_platforms="$$(echo "$$build_platforms" | sed -e 's/windows *[^ ]* *.exe *[^ ]* *[^ ]*//g' -e 's/; *;/;/g' -e 's/;[ ]*$$//')"; \
+		build_platforms="$$(echo "$$build_platforms" | sed -e 's/windows *[^ ]* *[^ ]* *.exe *[^ ]* *[^ ]*//g' -e 's/; *;/;/g' -e 's/;[ ]*$$//')"; \
 	fi; \
 	pushMultiArch () { \
 		tag=$$1; \
-		echo "$$build_platforms" | tr ';' '\n' | while read -r os arch suffix base_image addon_image; do \
+		echo "$$build_platforms" | tr ';' '\n' | while read -r os arch buildx_platform suffix base_image addon_image; do \
 			escaped_base_image=$${base_image/:/-}; \
+			escaped_buildx_platform=$${buildx_platform//\//-}; \
 			if ! [ -z $$escaped_base_image ]; then escaped_base_image+="-"; fi; \
 			docker buildx build --push \
-				--tag $(IMAGE_NAME):$$arch-$$os-$$escaped_base_image$$tag \
-				--platform=$$os/$$arch \
+				--tag $(IMAGE_NAME):$$escaped_buildx_platform-$$os-$$escaped_base_image$$tag \
+				--platform=$$os/$$buildx_platform \
 				--file $$(eval echo \$${dockerfile_$$os}) \
 				--build-arg binary=./bin/$*$$suffix \
 				--build-arg ARCH=$$arch \
@@ -172,13 +173,14 @@ $(CMDS:%=push-multiarch-%): push-multiarch-%: check-pull-base-ref build-%
 				--label revision=$(REV) \
 				.; \
 		done; \
-		images=$$(echo "$$build_platforms" | tr ';' '\n' | while read -r os arch suffix base_image addon_image; do \
+		images=$$(echo "$$build_platforms" | tr ';' '\n' | while read -r os arch buildx_platform suffix base_image addon_image; do \
 			escaped_base_image=$${base_image/:/-}; \
+			escaped_buildx_platform=$${buildx_platform//\//-}; \
 			if ! [ -z $$escaped_base_image ]; then escaped_base_image+="-"; fi; \
-			echo $(IMAGE_NAME):$$arch-$$os-$$escaped_base_image$$tag; \
+			echo $(IMAGE_NAME):$$escaped_buildx_platform-$$os-$$escaped_base_image$$tag; \
 		done); \
 		docker manifest create --amend $(IMAGE_NAME):$$tag $$images; \
-		echo "$$build_platforms" | tr ';' '\n' | while read -r os arch suffix base_image addon_image; do \
+		echo "$$build_platforms" | tr ';' '\n' | while read -r os arch buildx_platform suffix base_image addon_image; do \
 			if [ $$os = "windows" ]; then \
 				escaped_base_image=$${base_image/:/-}; \
 				if ! [ -z $$escaped_base_image ]; then escaped_base_image+="-"; fi; \
