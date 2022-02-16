@@ -46,10 +46,13 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 ## Release Process
 1. Identify all issues and ongoing PRs that should go into the release, and
   drive them to resolution.
-1. Download v2.8+ [K8s release notes
-  generator](https://github.com/kubernetes/release/tree/HEAD/cmd/release-notes)
+1. Download the latest version of the
+   [K8s release notes generator](https://github.com/kubernetes/release/tree/HEAD/cmd/release-notes)
+1. Create a
+   [Github personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+   with `repo:public_repo` access
 1. Generate release notes for the release. Replace arguments with the relevant
-  information.
+   information.
     * Clean up old cached information (also needed if you are generating release
       notes for multiple repos)
       ```bash
@@ -57,15 +60,24 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
       ```
     * For new minor releases on master:
         ```bash
-        GITHUB_TOKEN=<token> release-notes --discover=mergebase-to-latest
-        --github-org=kubernetes-csi --github-repo=external-provisioner
-        --required-author="" --output out.md
+        GITHUB_TOKEN=<token> release-notes \
+          --discover=mergebase-to-latest \
+          --org=kubernetes-csi \
+          --repo=external-provisioner \
+          --required-author="" \
+          --markdown-links \
+          --output out.md
         ```
     * For new patch releases on a release branch:
         ```bash
-        GITHUB_TOKEN=<token> release-notes --discover=patch-to-latest --branch=release-1.1
-        --github-org=kubernetes-csi --github-repo=external-provisioner
-        --required-author="" --output out.md
+        GITHUB_TOKEN=<token> release-notes \
+          --discover=patch-to-latest \
+          --branch=release-1.1 \
+          --org=kubernetes-csi \
+          --repo=external-provisioner \
+          --required-author="" \
+          --markdown-links \
+          --output out.md
         ```
 1. Compare the generated output to the new commits for the release to check if
    any notable change missed a release note.
@@ -99,6 +111,29 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
    CSI hostpath driver with the new sidecars in the [CSI repo](https://github.com/kubernetes-csi/csi-driver-host-path/tree/HEAD/deploy)
    and [k/k
    in-tree](https://github.com/kubernetes/kubernetes/tree/HEAD/test/e2e/testing-manifests/storage-csi/hostpath/hostpath)
+
+### Troubleshooting
+
+#### Image build jobs
+
+The following jobs are triggered after tagging to produce the corresponding
+image(s):
+https://k8s-testgrid.appspot.com/sig-storage-image-build
+
+Clicking on a failed build job opens that job in https://prow.k8s.io. Next to
+the job title is a rerun icon (circle with arrow). Clicking it opens a popup
+with a "rerun" button that maintainers with enough permissions can use. If in
+doubt, ask someone on #sig-release to rerun the job.
+
+Another way to rerun a job is to search for it in https://prow.k8s.io and click
+the rerun icon in the resulting job list:
+https://prow.k8s.io/?job=canary-csi-test-push-images
+
+#### Verify images
+
+Canary and staged images can be viewed at https://console.cloud.google.com/gcr/images/k8s-staging-sig-storage
+
+Promoted images can be viewed at https://console.cloud.google.com/gcr/images/k8s-artifacts-prod/us/sig-storage
 
 ## Adding support for a new Kubernetes release
 

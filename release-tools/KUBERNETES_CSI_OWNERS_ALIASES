@@ -31,15 +31,7 @@ aliases:
 
 # This documents who previously contributed to Kubernetes-CSI
 # as approver.
-emeritus_approver:
+emeritus_approvers:
 - lpabon
-- sbezverk
-- vladimirvivien
-
-# This documents who previously contributed to Kubernetes-CSI
-# as reviewer.
-emeritus_reviewer:
-- lpabon
-- saad-ali
 - sbezverk
 - vladimirvivien
