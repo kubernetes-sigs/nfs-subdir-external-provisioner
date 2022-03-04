@@ -30,7 +30,7 @@ $ helm install my-release nfs-subdir-external-provisioner/nfs-subdir-external-pr
     --set nfs.path=/exported/path
 ```
 
-The command deploys the given storage class in the default configuration. It can be used afterswards to provision persistent volumes. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+The command deploys the given storage class in the default configuration. It can be used afterwards to provision persistent volumes. The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
 > **Tip**: List all releases using `helm list`
 
@@ -84,3 +84,15 @@ The following tables lists the configurable parameters of this chart and their d
 | `affinity`                          | Affinity settings                                                                                     | `{}`                                                     |
 | `tolerations`                       | List of node taints to tolerate                                                                       | `[]`                                                     |
 | `labels`                            | Additional labels for any resource created                                                            | `{}`                                                     |
+
+## Install Multiple Provisioners
+
+It is possible to install more than one provisioner in your cluster to have access to multiple nfs servers and/or multiple exports from a single nfs server. Each provisioner must have a different `storageClass.provisionerName` and a different `storageClass.name`. For example:
+
+```console
+helm install second-nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+    --set nfs.server=y.y.y.y \
+    --set nfs.path=/other/exported/path \
+    --set storageClass.name=second-nfs-client \
+    --set storageClass.provisionerName=k8s-sigs.io/second-nfs-subdir-external-provisioner
+```
