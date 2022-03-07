@@ -1,6 +1,6 @@
 # Kubernetes NFS Subdir External Provisioner
 
-**NFS subdir external provisioner** is an automatic provisioner that use your _existing and already configured_ NFS server to support dynamic provisioning of Kubernetes Persistent Volumes via Persistent Volume Claims. Persistent volumes are provisioned as `${namespace}-${pvcName}-${pvName}`.
+**NFS subdir external provisioner** is an automatic provisioner that use your _existing and already configured_ NFS server to support dynamic provisioning of Kubernetes Persistent Volumes via Persistent Volume Claims. Persistent volumes are provisioned as `pv-${.PVC.uid}`.
 
 Note: This repository is migrated from https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client. As part of the migration:
 - The container image name and repository has changed to `k8s.gcr.io/sig-storage` and `nfs-subdir-external-provisioner` respectively.
