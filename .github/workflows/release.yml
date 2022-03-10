@@ -2,8 +2,8 @@ name: ci
 
 on:
   push:
-    branches:
-      - 'master'
+    tag:
+      - 'nfs-subdir-external-provisioner-*.*'
 
 jobs:
   docker:
@@ -16,7 +16,6 @@ jobs:
         name: Prepare
         id: prep
         run: |
-          git checkout $(git describe --tags --abbrev=0)
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
             if [[ $VERSION =~ ^gh-v([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$ ]]; then
