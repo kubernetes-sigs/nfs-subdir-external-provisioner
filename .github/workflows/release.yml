@@ -2,8 +2,8 @@ name: ci
 
 on:
   push:
-    tag:
-      - 'nfs-subdir-external-provisioner-*.*'
+    branch:
+      - 'master'
 
 jobs:
   docker:
@@ -55,22 +55,6 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
       -
-        name: Build and push
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile.multiarch
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.prep.outputs.tags }}
-          build-args: |
-            APP_FOLDER=/go/src/github.com/${{ github.repository }}
-          labels: |
-            org.opencontainers.image.title=${{ github.event.repository.name }}
-            org.opencontainers.image.description=${{ github.event.repository.description }}
-            org.opencontainers.image.url=${{ github.event.repository.html_url }}
-            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
-            org.opencontainers.image.created=${{ steps.prep.outputs.created }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
+        name: make build
+        run: make build && make container
+
