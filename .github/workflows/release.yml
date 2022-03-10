@@ -2,8 +2,8 @@ name: ci
 
 on:
   push:
-    tags:
-      - 'gh-v*.*.*'
+    branches:
+      - 'master'
 
 jobs:
   docker:
