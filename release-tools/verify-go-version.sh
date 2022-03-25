@@ -31,7 +31,7 @@ version=$("$GO" version) || die "determining version of $GO failed"
 majorminor=$(echo "$version" | sed -e 's/.*go\([0-9]*\)\.\([0-9]*\).*/\1.\2/')
 # SC1091: Not following: release-tools/prow.sh was not specified as input (see shellcheck -x).
 # shellcheck disable=SC1091
-expected=$(. release-tools/prow.sh >/dev/null && echo "$CSI_PROW_GO_VERSION_BUILD")
+expected=$(. release-tools/prow.sh >/dev/null && echo "${CSI_PROW_GO_VERSION_BUILD%.*}")
 
 if [ "$majorminor" != "$expected" ]; then
     cat >&2 <<EOF
