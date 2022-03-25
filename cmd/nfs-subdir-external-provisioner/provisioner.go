@@ -141,8 +141,10 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 
 func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
+	//basePath still needed later
 	basePath := filepath.Base(path)
-	oldPath := filepath.Join(mountPath, basePath)
+	//replace NFS Server Path with mountPath in Container
+	oldPath := strings.Replace(path, p.path, mountPath, 1)
 
 	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
 		glog.Warningf("path %s does not exist, deletion skipped", oldPath)
@@ -162,6 +164,7 @@ func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume
 
 	case "delete":
 		return os.RemoveAll(oldPath)
+		//TODO: Remove empty folders
 
 	case "retain":
 		return nil

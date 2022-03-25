@@ -2,8 +2,8 @@ name: ci
 
 on:
   push:
-    tags:
-      - 'gh-v*.*.*'
+    tag:
+      - 'nfs-subdir-external-provisioner-*.*'
 
 jobs:
   docker:
@@ -52,7 +52,6 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
-          registry: quay.io
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
       -
