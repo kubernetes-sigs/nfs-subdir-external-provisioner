@@ -35,7 +35,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/kubernetes/pkg/apis/core/v1/helper"
+	storagehelpers "k8s.io/component-helpers/storage/volume"
 	"sigs.k8s.io/sig-storage-lib-external-provisioner/v6/controller"
 )
 
@@ -193,7 +193,7 @@ func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *v1.Persisten
 	if p.client == nil {
 		return nil, fmt.Errorf("cannot get kube client")
 	}
-	className := helper.GetPersistentVolumeClass(pv)
+	className := storagehelpers.GetPersistentVolumeClass(pv)
 	if className == "" {
 		return nil, fmt.Errorf("volume has no storage class")
 	}
