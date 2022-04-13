@@ -19,6 +19,7 @@ This charts installs custom [storage class](https://kubernetes.io/docs/concepts/
 
 - Kubernetes >=1.9
 - Existing NFS Share
+- nfs-common (Debian based) or nfs-utils (RedHat based) installed on all nodes
 
 ## Installing the Chart
 
