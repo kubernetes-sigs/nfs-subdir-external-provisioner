@@ -17,4 +17,3 @@ all: build
 
 include release-tools/build.make
 
-BUILD_PLATFORMS=linux amd64; linux arm -arm; linux arm64 -arm64; linux ppc64le -ppc64le; linux s390x -s390x
