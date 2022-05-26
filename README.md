@@ -32,11 +32,11 @@ Make sure your NFS server is accessible from your Kubernetes cluster and get the
 
 **Step 2: Add the base resource**
 
-Create a `kustomization.yaml` file in a directory of your choice, and add the [deploy](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/tree/master/deploy) directory as a resource. This will use the kustomization file within that directory as our base.
+Create a `kustomization.yaml` file in a directory of your choice, and add the [deploy](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/tree/master/deploy) directory as a base. This will use the kustomization file within that directory as our base.
 
 ```yaml
 namespace: nfs-provisioner
-resources:
+bases:
   - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
 ```
 
@@ -89,8 +89,9 @@ Add the namespace resource and patch you created in earlier steps.
 
 ```yaml
 namespace: nfs-provisioner
-resources:
+bases:
   - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
+resources:
   - namespace.yaml
 patchesStrategicMerge:
   - patch_nfs_details.yaml
