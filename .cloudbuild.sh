@@ -15,7 +15,7 @@
 # limitations under the License.
 
 
-: ${CSI_PROW_BUILD_PLATFORMS:="linux amd64; linux arm -arm; linux arm64 -arm64; linux ppc64le -ppc64le; linux s390x -s390x"}
+: ${CSI_PROW_BUILD_PLATFORMS:="linux amd64 amd64; linux arm arm -arm; linux arm64 arm64 -arm64; linux ppc64le ppc64le -ppc64le; linux s390x s390x -s390x"}
 
 # shellcheck disable=SC1091
 . release-tools/cloudbuild.sh
