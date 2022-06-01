@@ -1,0 +1,34 @@
+name: Vulnerability Scanner
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+
+      - name: Build images from Dockerfile
+        run: |
+          make BUILD_PLATFORMS="linux amd64 amd64" container
+
+      - name: Run Trivy vulnerability scanner on nfs-subdir-external-provisioner image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'nfs-subdir-external-provisioner:latest'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN'
