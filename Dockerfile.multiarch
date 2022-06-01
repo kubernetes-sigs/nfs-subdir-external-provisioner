@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.14 as build-env
+FROM --platform=$BUILDPLATFORM golang:1.18 as build-env
 
 # xx wraps go to automatically configure $GOOS, $GOARCH, and $GOARM
 # based on TARGETPLATFORM provided by Docker.
