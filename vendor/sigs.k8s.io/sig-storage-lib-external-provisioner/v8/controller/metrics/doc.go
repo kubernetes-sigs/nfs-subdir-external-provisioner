@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2019 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,5 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package version provides utilities for version number comparisons
-package version // import "k8s.io/apimachinery/pkg/util/version"
+package metrics // import "sigs.k8s.io/sig-storage-lib-external-provisioner/v8/controller/metrics"

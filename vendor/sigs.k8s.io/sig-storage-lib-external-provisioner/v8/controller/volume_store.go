@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/klog"
+	klog "k8s.io/klog/v2"
 )
 
 // VolumeStore is an interface that's used to save PersistentVolumes to API server.

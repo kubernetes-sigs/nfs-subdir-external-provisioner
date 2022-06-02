@@ -9,6 +9,9 @@ rules:
   - apiGroups: [""]
     resources: ["endpoints"]
     verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update"]
 {{- if .Values.podSecurityPolicy.enabled }}
   - apiGroups:      ['extensions']
     resources:      ['podsecuritypolicies']
