@@ -165,7 +165,7 @@ If your cluster has RBAC enabled or you are running OpenShift you must authorize
 # Set the subject of the RBAC objects to the current namespace where the provisioner is being deployed
 $ NS=$(kubectl config get-contexts|grep -e "^\*" |awk '{print $5}')
 $ NAMESPACE=${NS:-default}
-$ sed -i'' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml ./deploy/deployment.yaml
+$ sed -i '' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml ./deploy/deployment.yaml
 $ kubectl create -f deploy/rbac.yaml
 ```
 
@@ -177,7 +177,7 @@ On OpenShift the service account used to bind volumes does not have the necessar
 ```sh
 # Set the subject of the RBAC objects to the current namespace where the provisioner is being deployed
 $ NAMESPACE=`oc project -q`
-$ sed -i'' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml ./deploy/deployment.yaml
+$ sed -i '' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml ./deploy/deployment.yaml
 $ oc create -f deploy/rbac.yaml
 $ oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:$NAMESPACE:nfs-client-provisioner
 ```
