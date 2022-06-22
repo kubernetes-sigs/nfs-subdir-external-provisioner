@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "nfs-subdir-external-provisioner.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
 spec:
