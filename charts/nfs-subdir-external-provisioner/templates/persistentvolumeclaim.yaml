@@ -3,6 +3,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: pvc-{{ template "nfs-subdir-external-provisioner.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
 spec:
