@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
   name: leader-locking-{{ template "nfs-subdir-external-provisioner.fullname" . }}
+  namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
     name: {{ template "nfs-subdir-external-provisioner.serviceAccountName" . }}
