@@ -125,7 +125,7 @@ Now check the PVC's directory has been deleted.
 
 **Step 7: Deploying your own PersistentVolumeClaims**
 
-To deploy your own PVC, make sure that you have the correct `storageClassName` (by default `managed-nfs-storage`). You can also patch the StorageClass resource to change it, like so:
+To deploy your own PVC, make sure that you have the correct `storageClassName` (by default `nfs-client`). You can also patch the StorageClass resource to change it, like so:
 
 ```yaml
 # kustomization.yaml
@@ -136,7 +136,7 @@ resources:
 patches:
 - target:
     kind: StorageClass
-    name: managed-nfs-storage
+    name: nfs-client
   patch: |-
     - op: replace
       path: /metadata/name
