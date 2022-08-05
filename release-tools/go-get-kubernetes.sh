@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
 # This script can be used while converting a repo from "dep" to "go mod"
 # by calling it after "go mod init" or to update the Kubernetes packages
 # in a repo that has already been converted. Only packages that are
