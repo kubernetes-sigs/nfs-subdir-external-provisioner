@@ -50,6 +50,9 @@ spec:
           volumeMounts:
             - name: {{ .Values.nfs.volumeName }}
               mountPath: /persistentvolumes
+          {{- if .Values.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
           env:
             - name: PROVISIONER_NAME
               value: {{ template "nfs-subdir-external-provisioner.provisionerName" . }}
@@ -61,10 +64,16 @@ spec:
             - name: ENABLE_LEADER_ELECTION
               value: "false"
             {{- end }}
+          {{- if .Values.extraEnvVars }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
+          {{- end }}
           {{- with .Values.resources }}
           resources:
 {{ toYaml . | indent 12 }}
           {{- end }}
+      {{- if .Values.extraContainers }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.extraContainers "context" $) | nindent 8 }}
+      {{- end }}
       volumes:
         - name: {{ .Values.nfs.volumeName }}
 {{- if .Values.buildMode }}
@@ -77,6 +86,9 @@ spec:
             server: {{ .Values.nfs.server }}
             path: {{ .Values.nfs.path }}
 {{- end }}
+      {{- if .Values.extraVolumes }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
+      {{- end }}
       {{- if and (.Values.tolerations) (semverCompare "^1.6-0" .Capabilities.KubeVersion.GitVersion) }}
       tolerations:
 {{ toYaml .Values.tolerations | indent 6 }}
