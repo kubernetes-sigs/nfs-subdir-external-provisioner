@@ -234,11 +234,11 @@ To disable leader election, define an env variable named ENABLE_LEADER_ELECTION 
 
 **_Parameters:_**
 
-| Name            | Description                                                                                                                                                                  |                             Default                              |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------: |
-| onDelete        | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory.                                                          | will be archived with name on the share: `archived-<volume.Name>` |
-| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored.                                                           | will be archived with name on the share: `archived-<volume.Name>` |
-| pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.<metadata>}`. Example: If folder should be named like `<pvc-namespace>-<pvc-name>`, use `${.PVC.namespace}-${.PVC.name}` as pathPattern. |                               n/a                                |
+| Name            | Description                                                  |                           Default                            |
+| --------------- | ------------------------------------------------------------ | :----------------------------------------------------------: |
+| onDelete        | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory. | will be archived with name on the share: `archived-<volume.Name>` |
+| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored. | will be archived with name on the share: `archived-<volume.Name>` |
+| pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.<metadata>}`. Example: If folder should be named like `<pvc-namespace>-<pvc-name>`, use `${.PVC.namespace}-${.PVC.name}` as pathPattern. The default pattern will add the pvname to folder, which will result in a unique folder name, combing namespace, name and an unique id. | will create a folder witht the pattern:  `${.PVC.namespace}-${.PVC.name}-${.PVC.pvname}` |
 
 This is `deploy/class.yaml` which defines the NFS subdir external provisioner's Kubernetes Storage Class:
 

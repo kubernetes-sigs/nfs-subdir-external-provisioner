@@ -41,6 +41,8 @@ import (
 
 const (
 	provisionerNameKey = "PROVISIONER_NAME"
+	defaultPathPattern = "${.PVC.namespace}-${.PVC.name}-${.PVC.pvname}"
+	mountPath          = "/persistentvolumes"
 )
 
 type nfsProvisioner struct {
@@ -73,10 +75,6 @@ func (meta *pvcMetadata) stringParser(str string) string {
 	return str
 }
 
-const (
-	mountPath = "/persistentvolumes"
-)
-
 var _ controller.Provisioner = &nfsProvisioner{}
 
 func (p *nfsProvisioner) Provision(ctx context.Context, options controller.ProvisionOptions) (*v1.PersistentVolume, controller.ProvisioningState, error) {
@@ -85,31 +83,27 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	}
 	glog.V(4).Infof("nfs provisioner: VolumeOptions %v", options)
 
-	pvcNamespace := options.PVC.Namespace
-	pvcName := options.PVC.Name
-
-	pvName := strings.Join([]string{pvcNamespace, pvcName, options.PVName}, "-")
-
 	metadata := &pvcMetadata{
 		data: map[string]string{
-			"name":      pvcName,
-			"namespace": pvcNamespace,
+			"name":      options.PVC.Name,
+			"namespace": options.PVC.Namespace,
+			"pvname":    options.PVName,
 		},
 		labels:      options.PVC.Labels,
 		annotations: options.PVC.Annotations,
 	}
 
-	fullPath := filepath.Join(mountPath, pvName)
-	path := filepath.Join(p.path, pvName)
-
 	pathPattern, exists := options.StorageClass.Parameters["pathPattern"]
-	if exists {
-		customPath := metadata.stringParser(pathPattern)
-		if customPath != "" {
-			path = filepath.Join(p.path, customPath)
-			fullPath = filepath.Join(mountPath, customPath)
-		}
+	if !exists {
+		pathPattern = defaultPathPattern
 	}
+
+	parsedPath := metadata.stringParser(pathPattern)
+	if parsedPath == "" {
+		return nil, controller.ProvisioningFinished, errors.New("unable to parse pathPattern: " + pathPattern)
+	}
+	path := filepath.Join(p.path, parsedPath)
+	fullPath := filepath.Join(mountPath, parsedPath)
 
 	glog.V(4).Infof("creating path %s", fullPath)
 	if err := os.MkdirAll(fullPath, 0o777); err != nil {
