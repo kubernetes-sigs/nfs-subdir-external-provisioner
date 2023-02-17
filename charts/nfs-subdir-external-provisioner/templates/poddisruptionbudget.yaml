@@ -1,0 +1,14 @@
+{{ if gt .Values.replicaCount 1.0}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+    {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
+  name: {{ template "nfs-subdir-external-provisioner.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "nfs-subdir-external-provisioner.selectorLabels" . | nindent 6 }}
+{{ end }}
