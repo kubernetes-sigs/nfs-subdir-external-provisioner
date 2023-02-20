@@ -108,3 +108,7 @@ affinity: {}
 
 # Additional labels for any resource created
 labels: {}
+
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
