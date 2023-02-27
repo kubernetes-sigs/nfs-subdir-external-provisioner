@@ -85,6 +85,8 @@ The following tables lists the configurable parameters of this chart and their d
 | `affinity`                          | Affinity settings                                                                                     | `{}`                                                     |
 | `tolerations`                       | List of node taints to tolerate                                                                       | `[]`                                                     |
 | `labels`                            | Additional labels for any resource created                                                            | `{}`                                                     |
+| `podDisruptionBudget.enabled`       | Create & use Pod Disruption Budget                                                                    | `false`                                               |
+| `podDisruptionBudget.maxUnavailable`| Set maximum unavailable pods in the Pod Disruption Budget                                             | `1`                                                  |
 
 ## Install Multiple Provisioners
 
