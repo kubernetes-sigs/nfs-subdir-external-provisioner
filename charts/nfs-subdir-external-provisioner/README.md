@@ -48,43 +48,43 @@ The command removes all the Kubernetes components associated with the chart and 
 
 The following tables lists the configurable parameters of this chart and their default values.
 
-| Parameter                           | Description                                                                                           | Default                                                  |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `replicaCount`                      | Number of provisioner instances to deployed                                                           | `1`                                                      |
-| `strategyType`                      | Specifies the strategy used to replace old Pods by new ones                                           | `Recreate`                                               |
-| `image.repository`                  | Provisioner image                                                                                     | `k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner` |
-| `image.tag`                         | Version of provisioner image                                                                          | `v4.0.2`                                                 |
-| `image.pullPolicy`                  | Image pull policy                                                                                     | `IfNotPresent`                                           |
-| `imagePullSecrets`                  | Image pull secrets                                                                                    | `[]`                                                     |
-| `storageClass.name`                 | Name of the storageClass                                                                              | `nfs-client`                                             |
-| `storageClass.defaultClass`         | Set as the default StorageClass                                                                       | `false`                                                  |
-| `storageClass.allowVolumeExpansion` | Allow expanding the volume                                                                            | `true`                                                   |
-| `storageClass.reclaimPolicy`        | Method used to reclaim an obsoleted volume                                                            | `Delete`                                                 |
-| `storageClass.provisionerName`      | Name of the provisionerName                                                                           | null                                                     |
-| `storageClass.archiveOnDelete`      | Archive PVC when deleting                                                                             | `true`                                                   |
-| `storageClass.onDelete`             | Strategy on PVC deletion. Overrides archiveOnDelete when set to lowercase values 'delete' or 'retain' | null                                                     |
-| `storageClass.pathPattern`          | Specifies a template for the directory name                                                           | null                                                     |
-| `storageClass.accessModes`          | Set access mode for PV                                                                                | `ReadWriteOnce`                                          |
-| `storageClass.volumeBindingMode`    | Set volume binding mode for Storage Class                                                             | `Immediate`                                              |
-| `storageClass.annotations`          | Set additional annotations for the StorageClass                                                       | `{}`                                                     |
-| `leaderElection.enabled`            | Enables or disables leader election                                                                   | `true`                                                   |
-| `nfs.server`                        | Hostname of the NFS server (required)                                                                 | null (ip or hostname)                                    |
-| `nfs.path`                          | Basepath of the mount point to be used                                                                | `/nfs-storage`                                           |
-| `nfs.mountOptions`                  | Mount options (e.g. 'nfsvers=3')                                                                      | null                                                     |
-| `nfs.volumeName`                    | Volume name used inside the pods                                                                      | `nfs-subdir-external-provisioner-root`                   |
-| `nfs.reclaimPolicy`                 | Reclaim policy for the main nfs volume used for subdir provisioning                                   | `Retain`                                                 |
-| `resources`                         | Resources required (e.g. CPU, memory)                                                                 | `{}`                                                     |
-| `rbac.create`                       | Use Role-based Access Control                                                                         | `true`                                                   |
-| `podSecurityPolicy.enabled`         | Create & use Pod Security Policy resources                                                            | `false`                                                  |
-| `podAnnotations`                    | Additional annotations for the Pods                                                                   | `{}`                                                     |
-| `priorityClassName`                 | Set pod priorityClassName                                                                             | null                                                     |
-| `serviceAccount.create`             | Should we create a ServiceAccount                                                                     | `true`                                                   |
-| `serviceAccount.name`               | Name of the ServiceAccount to use                                                                     | null                                                     |
-| `serviceAccount.annotations`        | Additional annotations for the ServiceAccount                                                         | `{}`                                                     |
-| `nodeSelector`                      | Node labels for pod assignment                                                                        | `{}`                                                     |
-| `affinity`                          | Affinity settings                                                                                     | `{}`                                                     |
-| `tolerations`                       | List of node taints to tolerate                                                                       | `[]`                                                     |
-| `labels`                            | Additional labels for any resource created                                                            | `{}`                                                     |
+| Parameter                           | Description                                                                                           | Default                                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `replicaCount`                      | Number of provisioner instances to deployed                                                           | `1`                                                           |
+| `strategyType`                      | Specifies the strategy used to replace old Pods by new ones                                           | `Recreate`                                                    |
+| `image.repository`                  | Provisioner image                                                                                     | `registry.k8s.io/sig-storage/nfs-subdir-external-provisioner` |
+| `image.tag`                         | Version of provisioner image                                                                          | `v4.0.2`                                                      |
+| `image.pullPolicy`                  | Image pull policy                                                                                     | `IfNotPresent`                                                |
+| `imagePullSecrets`                  | Image pull secrets                                                                                    | `[]`                                                          |
+| `storageClass.name`                 | Name of the storageClass                                                                              | `nfs-client`                                                  |
+| `storageClass.defaultClass`         | Set as the default StorageClass                                                                       | `false`                                                       |
+| `storageClass.allowVolumeExpansion` | Allow expanding the volume                                                                            | `true`                                                        |
+| `storageClass.reclaimPolicy`        | Method used to reclaim an obsoleted volume                                                            | `Delete`                                                      |
+| `storageClass.provisionerName`      | Name of the provisionerName                                                                           | null                                                          |
+| `storageClass.archiveOnDelete`      | Archive PVC when deleting                                                                             | `true`                                                        |
+| `storageClass.onDelete`             | Strategy on PVC deletion. Overrides archiveOnDelete when set to lowercase values 'delete' or 'retain' | null                                                          |
+| `storageClass.pathPattern`          | Specifies a template for the directory name                                                           | null                                                          |
+| `storageClass.accessModes`          | Set access mode for PV                                                                                | `ReadWriteOnce`                                               |
+| `storageClass.volumeBindingMode`    | Set volume binding mode for Storage Class                                                             | `Immediate`                                                   |
+| `storageClass.annotations`          | Set additional annotations for the StorageClass                                                       | `{}`                                                          |
+| `leaderElection.enabled`            | Enables or disables leader election                                                                   | `true`                                                        |
+| `nfs.server`                        | Hostname of the NFS server (required)                                                                 | null (ip or hostname)                                         |
+| `nfs.path`                          | Basepath of the mount point to be used                                                                | `/nfs-storage`                                                |
+| `nfs.mountOptions`                  | Mount options (e.g. 'nfsvers=3')                                                                      | null                                                          |
+| `nfs.volumeName`                    | Volume name used inside the pods                                                                      | `nfs-subdir-external-provisioner-root`                        |
+| `nfs.reclaimPolicy`                 | Reclaim policy for the main nfs volume used for subdir provisioning                                   | `Retain`                                                      |
+| `resources`                         | Resources required (e.g. CPU, memory)                                                                 | `{}`                                                          |
+| `rbac.create`                       | Use Role-based Access Control                                                                         | `true`                                                        |
+| `podSecurityPolicy.enabled`         | Create & use Pod Security Policy resources                                                            | `false`                                                       |
+| `podAnnotations`                    | Additional annotations for the Pods                                                                   | `{}`                                                          |
+| `priorityClassName`                 | Set pod priorityClassName                                                                             | null                                                          |
+| `serviceAccount.create`             | Should we create a ServiceAccount                                                                     | `true`                                                        |
+| `serviceAccount.name`               | Name of the ServiceAccount to use                                                                     | null                                                          |
+| `serviceAccount.annotations`        | Additional annotations for the ServiceAccount                                                         | `{}`                                                          |
+| `nodeSelector`                      | Node labels for pod assignment                                                                        | `{}`                                                          |
+| `affinity`                          | Affinity settings                                                                                     | `{}`                                                          |
+| `tolerations`                       | List of node taints to tolerate                                                                       | `[]`                                                          |
+| `labels`                            | Additional labels for any resource created                                                            | `{}`                                                          |
 
 ## Install Multiple Provisioners
 
