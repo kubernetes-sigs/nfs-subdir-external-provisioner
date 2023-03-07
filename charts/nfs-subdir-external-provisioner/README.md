@@ -48,7 +48,7 @@ The command removes all the Kubernetes components associated with the chart and 
 
 The following tables lists the configurable parameters of this chart and their default values.
 
-| Parameter                           | Description                                                                                           | Default                                                       |
+| Parameter                            | Description                                                                                           | Default                                                       |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `replicaCount`                       | Number of provisioner instances to deployed                                                           | `1`                                                           |
 | `strategyType`                       | Specifies the strategy used to replace old Pods by new ones                                           | `Recreate`                                                    |
