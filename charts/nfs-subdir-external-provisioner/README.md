@@ -99,8 +99,3 @@ helm install second-nfs-subdir-external-provisioner nfs-subdir-external-provisio
     --set storageClass.name=second-nfs-client \
     --set storageClass.provisionerName=k8s-sigs.io/second-nfs-subdir-external-provisioner
 ```
-
-
-
-
-
