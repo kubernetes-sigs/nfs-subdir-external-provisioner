@@ -62,6 +62,17 @@ Return the appropriate apiVersion for podSecurityPolicy.
 {{- end -}}
 
 {{/*
+Return the appropriate apiVersion for podDisruptionBudget.
+*/}}
+{{- define "podDisruptionBudget.apiVersion" -}}
+{{- if semverCompare ">=1.21-0" .Capabilities.KubeVersion.GitVersion -}}
+{{- print "policy/v1" -}}
+{{- else -}}
+{{- print "policy/v1beta1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Common labels
 */}}
 {{- define "nfs-subdir-external-provisioner.labels" -}}
