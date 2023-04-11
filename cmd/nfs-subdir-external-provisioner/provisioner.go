@@ -36,7 +36,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	storagehelpers "k8s.io/component-helpers/storage/volume"
-	"sigs.k8s.io/sig-storage-lib-external-provisioner/v8/controller"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/v9/controller"
 )
 
 const (

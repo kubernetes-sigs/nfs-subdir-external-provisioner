@@ -52,8 +52,8 @@ import (
 	ref "k8s.io/client-go/tools/reference"
 	"k8s.io/client-go/util/workqueue"
 	klog "k8s.io/klog/v2"
-	"sigs.k8s.io/sig-storage-lib-external-provisioner/v8/controller/metrics"
-	"sigs.k8s.io/sig-storage-lib-external-provisioner/v8/util"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/v9/controller/metrics"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/v9/util"
 )
 
 // This annotation is added to a PV that has been dynamically provisioned by
@@ -865,11 +865,11 @@ func (ctrl *ProvisionController) Run(ctx context.Context) {
 	go ctrl.volumeStore.Run(ctx, DefaultThreadiness)
 
 	if ctrl.leaderElection {
-		rl, err := resourcelock.New("endpoints",
+		rl, err := resourcelock.New(resourcelock.EndpointsLeasesResourceLock,
 			ctrl.leaderElectionNamespace,
 			strings.Replace(ctrl.provisionerName, "/", "-", -1),
 			ctrl.client.CoreV1(),
-			nil,
+			ctrl.client.CoordinationV1(),
 			resourcelock.ResourceLockConfig{
 				Identity:      ctrl.id,
 				EventRecorder: ctrl.eventRecorder,
@@ -1099,6 +1099,11 @@ func (ctrl *ProvisionController) syncVolume(ctx context.Context, obj interface{}
 		return fmt.Errorf("expected volume but got %+v", obj)
 	}
 
+	if !ctrl.isProvisionerForVolume(ctx, volume) {
+		// Current provisioner is not responsible for the volume
+		return nil
+	}
+
 	volume, err := ctrl.handleProtectionFinalizer(ctx, volume)
 	if err != nil {
 		return err
@@ -1113,26 +1118,57 @@ func (ctrl *ProvisionController) syncVolume(ctx context.Context, obj interface{}
 	return nil
 }
 
+func (ctrl *ProvisionController) isProvisionerForVolume(ctx context.Context, volume *v1.PersistentVolume) bool {
+	if metav1.HasAnnotation(volume.ObjectMeta, annDynamicallyProvisioned) {
+		provisionPluginName := volume.Annotations[annDynamicallyProvisioned]
+		migratedAnn := volume.Annotations[annMigratedTo]
+		// Determine if the PV is owned by the current provisioner.
+		if !ctrl.knownProvisioner(provisionPluginName) && !ctrl.knownProvisioner(migratedAnn) {
+			// The current provisioner is not responsible for adding the finalizer
+			return false
+		}
+	} else {
+		// Statically provisioned volume. Check if the volume type is CSI.
+		if volume.Spec.PersistentVolumeSource.CSI != nil {
+			volumeProvisioner := volume.Spec.CSI.Driver
+			if !ctrl.knownProvisioner(volumeProvisioner) {
+				return false
+			}
+		} else {
+			// Check if the volume is being migrated
+			migratedAnn := volume.Annotations[annMigratedTo]
+			if !ctrl.knownProvisioner(migratedAnn) {
+				// The current provisioner is not responsible for adding the finalizer
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (ctrl *ProvisionController) handleProtectionFinalizer(ctx context.Context, volume *v1.PersistentVolume) (*v1.PersistentVolume, error) {
-	var modifiedFinalizers []string
 	var modified bool
+	klog.V(4).Infof("handleProtectionFinalizer Volume : %+v", volume)
 	reclaimPolicy := volume.Spec.PersistentVolumeReclaimPolicy
+	volumeFinalizers := volume.ObjectMeta.Finalizers
+
+	// Add the finalizer only if `addFinalizer` config option is enabled, finalizer doesn't exist and PV is not already
+	// under deletion.
+	if ctrl.addFinalizer && reclaimPolicy == v1.PersistentVolumeReclaimDelete && volume.DeletionTimestamp == nil && volume.Status.Phase == v1.VolumeBound {
+		volumeFinalizers, modified = addFinalizer(volumeFinalizers, finalizerPV)
+	}
+
 	// Check if the `addFinalizer` config option is disabled, i.e, rollback scenario, or the reclaim policy is changed
 	// to `Retain` or `Recycle`
 	if !ctrl.addFinalizer || reclaimPolicy == v1.PersistentVolumeReclaimRetain || reclaimPolicy == v1.PersistentVolumeReclaimRecycle {
-		modifiedFinalizers, modified = removeFinalizer(volume.ObjectMeta.Finalizers, finalizerPV)
-	}
-	// Add the finalizer only if `addFinalizer` config option is enabled, finalizer doesn't exist and PV is not already
-	// under deletion.
-	if ctrl.addFinalizer && reclaimPolicy == v1.PersistentVolumeReclaimDelete && volume.DeletionTimestamp == nil {
-		modifiedFinalizers, modified = addFinalizer(volume.ObjectMeta.Finalizers, finalizerPV)
+		volumeFinalizers, modified = removeFinalizer(volumeFinalizers, finalizerPV)
 	}
 
 	if modified {
-		volume.ObjectMeta.Finalizers = modifiedFinalizers
+		volume.ObjectMeta.Finalizers = volumeFinalizers
 		newVolume, err := ctrl.updatePersistentVolume(ctx, volume)
 		if err != nil {
-			return volume, fmt.Errorf("failed to modify finalizers to %+v on volume %s err: %+v", modifiedFinalizers, volume.Name, err)
+			return volume, fmt.Errorf("failed to modify finalizers to %+v on volume %s err: %+v", volumeFinalizers, volume.Name, err)
 		}
 		volume = newVolume
 	}
@@ -1224,16 +1260,6 @@ func (ctrl *ProvisionController) shouldDelete(ctx context.Context, volume *v1.Pe
 		return false
 	}
 
-	if !metav1.HasAnnotation(volume.ObjectMeta, annDynamicallyProvisioned) {
-		return false
-	}
-
-	ann := volume.Annotations[annDynamicallyProvisioned]
-	migratedTo := volume.Annotations[annMigratedTo]
-	if ann != ctrl.provisionerName && migratedTo != ctrl.provisionerName {
-		return false
-	}
-
 	return true
 }
 
@@ -1258,14 +1284,18 @@ func (ctrl *ProvisionController) checkFinalizer(volume *v1.PersistentVolume, fin
 
 func (ctrl *ProvisionController) updateProvisionStats(claim *v1.PersistentVolumeClaim, err error, startTime time.Time) {
 	class := ""
+	source := ""
 	if claim.Spec.StorageClassName != nil {
 		class = *claim.Spec.StorageClassName
 	}
+	if claim.Spec.DataSource != nil {
+		source = claim.Spec.DataSource.Kind
+	}
 	if err != nil {
-		ctrl.metrics.PersistentVolumeClaimProvisionFailedTotal.WithLabelValues(class).Inc()
+		ctrl.metrics.PersistentVolumeClaimProvisionFailedTotal.WithLabelValues(class, source).Inc()
 	} else {
-		ctrl.metrics.PersistentVolumeClaimProvisionDurationSeconds.WithLabelValues(class).Observe(time.Since(startTime).Seconds())
-		ctrl.metrics.PersistentVolumeClaimProvisionTotal.WithLabelValues(class).Inc()
+		ctrl.metrics.PersistentVolumeClaimProvisionDurationSeconds.WithLabelValues(class, source).Observe(time.Since(startTime).Seconds())
+		ctrl.metrics.PersistentVolumeClaimProvisionTotal.WithLabelValues(class, source).Inc()
 	}
 }
 
@@ -1280,14 +1310,6 @@ func (ctrl *ProvisionController) updateDeleteStats(volume *v1.PersistentVolume, 
 }
 
 func (ctrl *ProvisionController) updatePersistentVolume(ctx context.Context, volume *v1.PersistentVolume) (*v1.PersistentVolume, error) {
-	if !metav1.HasAnnotation(volume.ObjectMeta, annDynamicallyProvisioned) {
-		return volume, nil
-	}
-	provisionedBy := volume.Annotations[annDynamicallyProvisioned]
-	migratedTo := volume.Annotations[annMigratedTo]
-	if provisionedBy != ctrl.provisionerName && migratedTo != ctrl.provisionerName {
-		return volume, nil
-	}
 	newVolume, err := ctrl.client.CoreV1().PersistentVolumes().Update(ctx, volume, metav1.UpdateOptions{})
 	if err != nil {
 		return volume, err
@@ -1386,6 +1408,10 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 			selectedNode, err = ctrl.client.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{}) // TODO (verult) cache Nodes
 		}
 		if err != nil {
+			// if node does not exist, reschedule and remove volume.kubernetes.io/selected-node annotation
+			if apierrs.IsNotFound(err) {
+				return ctrl.provisionVolumeErrorHandling(ctx, ProvisioningReschedule, err, claim, operation)
+			}
 			err = fmt.Errorf("failed to get target node: %v", err)
 			ctrl.eventRecorder.Event(claim, v1.EventTypeWarning, "ProvisioningFailed", err.Error())
 			return ProvisioningNoChange, err
@@ -1408,35 +1434,9 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 			klog.Info(logOperation(operation, "volume provision ignored: %v", ierr))
 			return ProvisioningFinished, errStopProvision
 		}
-		err = fmt.Errorf("failed to provision volume with StorageClass %q: %v", claimClass, err)
-		ctrl.eventRecorder.Event(claim, v1.EventTypeWarning, "ProvisioningFailed", err.Error())
-		if _, ok := claim.Annotations[annSelectedNode]; ok && result == ProvisioningReschedule {
-			// For dynamic PV provisioning with delayed binding, the provisioner may fail
-			// because the node is wrong (permanent error) or currently unusable (not enough
-			// capacity). If the provisioner wants to give up scheduling with the currently
-			// selected node, then it can ask for that by returning ProvisioningReschedule
-			// as state.
-			//
-			// `selectedNode` must be removed to notify scheduler to schedule again.
-			if errLabel := ctrl.rescheduleProvisioning(ctx, claim); errLabel != nil {
-				klog.Info(logOperation(operation, "volume rescheduling failed: %v", errLabel))
-				// If unsetting that label fails in ctrl.rescheduleProvisioning, we
-				// keep the volume in the work queue as if the provisioner had
-				// returned ProvisioningFinished and simply try again later.
-				return ProvisioningFinished, err
-			}
-			// Label was removed, stop working on the volume.
-			klog.Info(logOperation(operation, "volume rescheduled because: %v", err))
-			return ProvisioningFinished, errStopProvision
-		}
 
-		// ProvisioningReschedule shouldn't have been returned for volumes without selected node,
-		// but if we get it anyway, then treat it like ProvisioningFinished because we cannot
-		// reschedule.
-		if result == ProvisioningReschedule {
-			result = ProvisioningFinished
-		}
-		return result, err
+		err = fmt.Errorf("failed to provision volume with StorageClass %q: %v", claimClass, err)
+		return ctrl.provisionVolumeErrorHandling(ctx, result, err, claim, operation)
 	}
 
 	klog.Info(logOperation(operation, "volume %q provisioned", volume.Name))
@@ -1461,6 +1461,37 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 		utilruntime.HandleError(err)
 	}
 	return ProvisioningFinished, nil
+}
+
+func (ctrl *ProvisionController) provisionVolumeErrorHandling(ctx context.Context, result ProvisioningState, err error, claim *v1.PersistentVolumeClaim, operation string) (ProvisioningState, error) {
+	ctrl.eventRecorder.Event(claim, v1.EventTypeWarning, "ProvisioningFailed", err.Error())
+	if _, ok := claim.Annotations[annSelectedNode]; ok && result == ProvisioningReschedule {
+		// For dynamic PV provisioning with delayed binding, the provisioner may fail
+		// because the node is wrong (permanent error) or currently unusable (not enough
+		// capacity). If the provisioner wants to give up scheduling with the currently
+		// selected node, then it can ask for that by returning ProvisioningReschedule
+		// as state.
+		//
+		// `selectedNode` must be removed to notify scheduler to schedule again.
+		if errLabel := ctrl.rescheduleProvisioning(ctx, claim); errLabel != nil {
+			klog.Info(logOperation(operation, "volume rescheduling failed: %v", errLabel))
+			// If unsetting that label fails in ctrl.rescheduleProvisioning, we
+			// keep the volume in the work queue as if the provisioner had
+			// returned ProvisioningFinished and simply try again later.
+			return ProvisioningFinished, err
+		}
+		// Label was removed, stop working on the volume.
+		klog.Info(logOperation(operation, "volume rescheduled because: %v", err))
+		return ProvisioningFinished, errStopProvision
+	}
+
+	// ProvisioningReschedule shouldn't have been returned for volumes without selected node,
+	// but if we get it anyway, then treat it like ProvisioningFinished because we cannot
+	// reschedule.
+	if result == ProvisioningReschedule {
+		result = ProvisioningFinished
+	}
+	return result, err
 }
 
 // deleteVolumeOperation attempts to delete the volume backing the given
@@ -1528,12 +1559,7 @@ func (ctrl *ProvisionController) deleteVolumeOperation(ctx context.Context, volu
 		}
 	}
 
-	klog.Info(logOperation(operation, "persistentvolume deleted"))
-
-	if err = ctrl.volumes.Delete(volume); err != nil {
-		utilruntime.HandleError(err)
-	}
-	klog.Info(logOperation(operation, "succeeded"))
+	klog.Info(logOperation(operation, "persistentvolume deleted succeeded"))
 	return nil
 }
 

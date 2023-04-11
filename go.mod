@@ -8,7 +8,7 @@ require (
 	k8s.io/apimachinery v0.26.0
 	k8s.io/client-go v0.26.0
 	k8s.io/component-helpers v0.26.0
-	sigs.k8s.io/sig-storage-lib-external-provisioner/v8 v8.0.0
+	sigs.k8s.io/sig-storage-lib-external-provisioner/v9 v9.0.2
 )
 
 require (

@@ -580,11 +580,11 @@ k8s.io/utils/trace
 ## explicit; go 1.18
 sigs.k8s.io/json
 sigs.k8s.io/json/internal/golang/encoding/json
-# sigs.k8s.io/sig-storage-lib-external-provisioner/v8 v8.0.0
-## explicit; go 1.16
-sigs.k8s.io/sig-storage-lib-external-provisioner/v8/controller
-sigs.k8s.io/sig-storage-lib-external-provisioner/v8/controller/metrics
-sigs.k8s.io/sig-storage-lib-external-provisioner/v8/util
+# sigs.k8s.io/sig-storage-lib-external-provisioner/v9 v9.0.2
+## explicit; go 1.19
+sigs.k8s.io/sig-storage-lib-external-provisioner/v9/controller
+sigs.k8s.io/sig-storage-lib-external-provisioner/v9/controller/metrics
+sigs.k8s.io/sig-storage-lib-external-provisioner/v9/util
 # sigs.k8s.io/structured-merge-diff/v4 v4.2.3
 ## explicit; go 1.13
 sigs.k8s.io/structured-merge-diff/v4/fieldpath

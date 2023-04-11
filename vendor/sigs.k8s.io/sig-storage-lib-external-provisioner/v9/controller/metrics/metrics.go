@@ -67,26 +67,26 @@ func New(subsystem string) Metrics {
 			prometheus.CounterOpts{
 				Subsystem: subsystem,
 				Name:      "persistentvolumeclaim_provision_total",
-				Help:      "Total number of persistent volumes provisioned succesfully. Broken down by storage class name.",
+				Help:      "Total number of persistent volumes provisioned succesfully. Broken down by storage class name and source of the claim.",
 			},
-			[]string{"class"},
+			[]string{"class", "source"},
 		),
 		PersistentVolumeClaimProvisionFailedTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Subsystem: subsystem,
 				Name:      "persistentvolumeclaim_provision_failed_total",
-				Help:      "Total number of persistent volume provision failed attempts. Broken down by storage class name.",
+				Help:      "Total number of persistent volume provision failed attempts. Broken down by storage class name and source of the claim.",
 			},
-			[]string{"class"},
+			[]string{"class", "source"},
 		),
 		PersistentVolumeClaimProvisionDurationSeconds: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Subsystem: subsystem,
 				Name:      "persistentvolumeclaim_provision_duration_seconds",
-				Help:      "Latency in seconds to provision persistent volumes. Failed provisioning attempts are ignored. Broken down by storage class name.",
+				Help:      "Latency in seconds to provision persistent volumes. Failed provisioning attempts are ignored. Broken down by storage class name and source of the claim.",
 				Buckets:   prometheus.DefBuckets,
 			},
-			[]string{"class"},
+			[]string{"class", "source"},
 		),
 		PersistentVolumeDeleteTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
