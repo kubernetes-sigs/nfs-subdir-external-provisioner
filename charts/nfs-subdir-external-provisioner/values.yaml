@@ -51,7 +51,7 @@ storageClass:
   # Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany
   accessModes: ReadWriteOnce
 
-  # Set volume bindinng mode - Immediate or WaitForFirstConsumer
+  # Set volume binding mode - Immediate or WaitForFirstConsumer
   volumeBindingMode: Immediate
 
   # Storage class annotations
