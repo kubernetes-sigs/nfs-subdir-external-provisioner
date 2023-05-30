@@ -3,7 +3,7 @@ name: ci
 on:
   push:
     tags:
-      - 'gh-v*.*.*'
+      - 'nfs-subdir-external-provisioner-*.*.*'
 
 jobs:
   docker:
