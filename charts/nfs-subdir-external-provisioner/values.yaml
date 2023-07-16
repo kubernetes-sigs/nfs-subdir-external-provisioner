@@ -15,6 +15,10 @@ nfs:
   # Reclaim policy for the main nfs volume
   reclaimPolicy: Retain
 
+skew:
+  maxSkew: 1
+  whenUnsatisfiable: ScheduleAnyway
+
 # For creating the StorageClass automatically:
 storageClass:
   create: true
