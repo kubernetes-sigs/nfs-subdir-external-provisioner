@@ -94,7 +94,7 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	}
 
 	pathPattern, exists := options.StorageClass.Parameters["pathPattern"]
-	if !exists {
+	if !exists || pathPattern == "" {
 		pathPattern = defaultPathPattern
 	}
 
