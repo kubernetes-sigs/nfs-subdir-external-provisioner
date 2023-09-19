@@ -2,13 +2,14 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  namespace: {{ template "nfs-subdir-external-provisioner.namespace" . }}
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
   name: leader-locking-{{ template "nfs-subdir-external-provisioner.fullname" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ template "nfs-subdir-external-provisioner.serviceAccountName" . }}
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ template "nfs-subdir-external-provisioner.namespace" . }}
 roleRef:
   kind: Role
   name: leader-locking-{{ template "nfs-subdir-external-provisioner.fullname" . }}

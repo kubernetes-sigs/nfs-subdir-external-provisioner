@@ -2,6 +2,7 @@
 apiVersion: {{ template "podDisruptionBudget.apiVersion" . }}
 kind: PodDisruptionBudget
 metadata:
+  namespace: {{ template "nfs-subdir-external-provisioner.namespace" . }}
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
   name: {{ template "nfs-subdir-external-provisioner.fullname" . }}

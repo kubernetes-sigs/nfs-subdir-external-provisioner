@@ -1,6 +1,9 @@
 replicaCount: 1
 strategyType: Recreate
 
+# Specify Namespace to deploy the nfs-subdir-external-provisioner resource if not the helm release namepsace
+namespace: ""
+
 image:
   repository: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner
   tag: v4.0.2
