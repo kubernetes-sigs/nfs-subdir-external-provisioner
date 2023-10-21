@@ -1,3 +1,11 @@
+
+{{- $server := .Values.nfs.server -}}
+{{- $path := .Values.nfs.path -}}
+{{- if (include "nfs.existing-configmap-provided" .) -}}
+{{- $server := (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "server" "defaultValue" .Values.nfs.server "context")) -}}
+{{- $path := (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "path" "defaultValue" .Values.nfs.path "context")) -}}
+{{- end -}}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -54,9 +62,9 @@ spec:
             - name: PROVISIONER_NAME
               value: {{ template "nfs-subdir-external-provisioner.provisionerName" . }}
             - name: NFS_SERVER
-              value: {{ .Values.nfs.server }}
+              value: {{  $server }}
             - name: NFS_PATH
-              value: {{ .Values.nfs.path }}
+              value: {{ $path }}
             {{- if eq .Values.leaderElection.enabled false }}
             - name: ENABLE_LEADER_ELECTION
               value: "false"
@@ -74,8 +82,8 @@ spec:
             claimName: pvc-{{ template "nfs-subdir-external-provisioner.fullname" . }}
 {{- else }}
           nfs:
-            server: {{ .Values.nfs.server }}
-            path: {{ .Values.nfs.path }}
+            server: {{ $server}}
+            path: {{ $path }}
 {{- end }}
       {{- if and (.Values.tolerations) (semverCompare "^1.6-0" .Capabilities.KubeVersion.GitVersion) }}
       tolerations:
