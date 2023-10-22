@@ -1,8 +1,7 @@
-
-{{- $server := .Values.nfs.server -}}
+{{- $server := .Values.nfs.server  | default "0.0.0.0" -}}
 {{- $path := .Values.nfs.path -}}
 {{- if (include "nfs.existing-configmap-provided" .) -}}
-{{- $server := (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "server" "defaultValue" .Values.nfs.server "context" $)) -}}
+{{- $server := (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "server" "0.0.0.0" .Values.nfs.server "context" $)) -}}
 {{- $path := (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "path" "defaultValue" .Values.nfs.path "context" $)) -}}
 {{- end -}}
 

@@ -1,6 +1,6 @@
 {{ if (include "nfs.existing-configmap-provided" .) }}
-{{- $existingConfigMap := (lookup "v1" "ConfigMap" .Values.nfs.existingConfigMap.namespace .Values.nfs.existingConfigMap.name).data | default dict }}
-{{- if not $existingConfigMap }}
+{{- $existingConfigMap := (lookup "v1" "ConfigMap" .Values.nfs.existingConfigMap.namespace .Values.nfs.existingConfigMap.name ).data }}
+{{- if (not $existingConfigMap)  }}
 apiVersion: v1
 data:
   path: {{ .Values.nfs.path }}
@@ -9,5 +9,7 @@ immutable: false
 kind: ConfigMap
 metadata:
   name: {{ template "nfs.existing-configmap" . }}
+  annotation: 
+    helm.sh/hook: pre-install, pre-upgrade
 {{- end }}
 {{- end }}

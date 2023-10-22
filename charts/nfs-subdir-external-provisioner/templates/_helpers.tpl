@@ -2,7 +2,7 @@
 {{/* 
    Allow namespace to be overriden
 */}}
-{{- define "common.name.namespace" -}}
+{{- define "common.names.namespace" -}}
 {{- default .Release.Namespace .Values.namespaceOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -146,7 +146,7 @@ Params:
 */}}
 {{- define "common.configmap.lookup" -}}
 {{- $value := "" -}}
-{{- $configmapData := (lookup "v1" "ConfigMap" (include "common.names.namespace" .context) .configmapName).data -}}
+{{- $configmapData := (lookup "v1" "ConfigMap" (include "common.names.namespace" .context) (index . "config")).data -}}
 {{- if and $configmapData (hasKey $configmapData .key) -}}
   {{- $value = index $configmapData .key -}}
 {{- else if .defaultValue -}}
