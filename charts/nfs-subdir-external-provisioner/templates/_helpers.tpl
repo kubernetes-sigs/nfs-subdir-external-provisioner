@@ -138,7 +138,7 @@ Usage:
 {{ include "common.configmap.lookup" (dict "secret" "configmap-name" "key" "keyName" "defaultValue" .Values.myValue "context" $) }}
 
 Params:
-  - configmapName - String - Required - Name of the 'Secret' resource where the password is stored.
+  - config - String - Required - Name of the 'Secret' resource where the password is stored.
   - key - String - Required - Name of the key in the secret.
   - defaultValue - String - Required - The path to the validating value in the values.yaml, e.g: "mysql.password". Will pick first parameter with a defined value.
   - context - Context - Required - Parent context.
