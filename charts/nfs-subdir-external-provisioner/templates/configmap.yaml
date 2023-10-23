@@ -1,10 +1,11 @@
+{{- $server := .Values.nfs.server  | default "127.0.0.1" -}}
 {{ if (include "nfs.existing-configmap-provided" .) }}
-{{- $existingConfigMap := (lookup "v1" "ConfigMap" .Values.nfs.existingConfigMap.namespace .Values.nfs.existingConfigMap.name ).data }}
+{{- $existingConfigMap := (lookup "v1" "ConfigMap" .Values.nfs.existingConfigMap.namespace .Values.nfs.existingConfigMap.name).data }}
 {{- if (not $existingConfigMap)  }}
 apiVersion: v1
 data:
   path: {{ .Values.nfs.path }}
-  server: {{  .Values.nfs.server}}
+  server: {{ $server }}
 immutable: false
 kind: ConfigMap
 metadata:

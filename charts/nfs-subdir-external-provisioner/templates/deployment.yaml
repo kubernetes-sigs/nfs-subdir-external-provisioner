@@ -1,10 +1,9 @@
-{{- $server := .Values.nfs.server  | default "0.0.0.0" -}}
+{{- $server := .Values.nfs.server | default "127.0.0.1" -}}
 {{- $path := .Values.nfs.path -}}
 {{- if (include "nfs.existing-configmap-provided" .) -}}
-{{- $server := (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "server" "0.0.0.0" .Values.nfs.server "context" $)) -}}
-{{- $path := (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "path" "defaultValue" .Values.nfs.path "context" $)) -}}
+{{- $server = (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "server" "defaultValue" "127.0.0.1" "context" $)) -}}
+{{- $path = (include "common.configmap.lookup" (dict "config" .Values.nfs.existingConfigMap.name "key" "path" "defaultValue" .Values.nfs.path "context" $)) -}}
 {{- end -}}
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -61,7 +60,7 @@ spec:
             - name: PROVISIONER_NAME
               value: {{ template "nfs-subdir-external-provisioner.provisionerName" . }}
             - name: NFS_SERVER
-              value: {{  $server }}
+              value: {{ $server }}
             - name: NFS_PATH
               value: {{ $path }}
             {{- if eq .Values.leaderElection.enabled false }}

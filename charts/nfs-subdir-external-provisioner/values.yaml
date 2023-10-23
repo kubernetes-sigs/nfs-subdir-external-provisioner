@@ -16,7 +16,7 @@ nfs:
   reclaimPolicy: Retain
   # existing configmap in order to get server and path
   existingConfigMap:
-    name: "oiadp-nfs-config"
+    name: oiadp-nfs-config
     namespace: default
 
 # For creating the StorageClass automatically:

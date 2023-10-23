@@ -146,7 +146,7 @@ Params:
 */}}
 {{- define "common.configmap.lookup" -}}
 {{- $value := "" -}}
-{{- $configmapData := (lookup "v1" "ConfigMap" (include "common.names.namespace" .context) (index . "config")).data -}}
+{{- $configmapData := (lookup "v1" "ConfigMap" .context.Values.nfs.existingConfigMap.namespace .config).data -}}
 {{- if and $configmapData (hasKey $configmapData .key) -}}
   {{- $value = index $configmapData .key -}}
 {{- else if .defaultValue -}}
