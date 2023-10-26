@@ -14,6 +14,10 @@ nfs:
   volumeName: nfs-subdir-external-provisioner-root
   # Reclaim policy for the main nfs volume
   reclaimPolicy: Retain
+  # existing configmap in order to get server and path
+  existingConfigMap:
+    name: oiadp-nfs-config
+    namespace: default
 
 # For creating the StorageClass automatically:
 storageClass:
