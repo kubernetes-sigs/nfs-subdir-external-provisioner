@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: test-claim
 spec:
-  storageClassName: managed-nfs-storage
+  storageClassName: nfs-client
   accessModes:
     - ReadWriteMany
   resources:

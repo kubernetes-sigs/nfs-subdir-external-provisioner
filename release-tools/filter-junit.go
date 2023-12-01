@@ -35,10 +35,18 @@ var (
 )
 
 /*
- * TestSuite represents a JUnit file. Due to how encoding/xml works, we have
+ * TestResults represents a JUnit file. Due to how encoding/xml works, we have
  * represent all fields that we want to be passed through. It's therefore
  * not a complete solution, but good enough for Ginkgo + Spyglass.
+ *
+ * Before Kubernetes 1.25 and ginkgo v2, we directly had <testsuite> in the
+ * JUnit file. Now we get <testsuites> and inside it the <testsuite>.
  */
+type TestResults struct {
+	XMLName   string    `xml:"testsuites"`
+	TestSuite TestSuite `xml:"testsuite"`
+}
+
 type TestSuite struct {
 	XMLName   string     `xml:"testsuite"`
 	TestCases []TestCase `xml:"testcase"`
@@ -93,7 +101,15 @@ func main() {
 			}
 		}
 		if err := xml.Unmarshal(data, &junit); err != nil {
-			panic(err)
+			if err.Error() != "expected element type <testsuite> but have <testsuites>" {
+				panic(err)
+			}
+			// Fall back to Ginkgo v2 format.
+			var junitv2 TestResults
+			if err := xml.Unmarshal(data, &junitv2); err != nil {
+				panic(err)
+			}
+			junit = junitv2.TestSuite
 		}
 	}
 

@@ -1,9 +1,10 @@
 # See the OWNERS docs at https://go.k8s.io/owners
 
 approvers:
-  - wongma7
+  - ashishranjan738
+  - humblec
+  - jackielii
   - jsafrane
   - kmova
-  - jackielii
-  - ashishranjan738
   - yonatankahana
+  - wongma7

@@ -3,7 +3,7 @@
 **NFS subdir external provisioner** is an automatic provisioner that use your _existing and already configured_ NFS server to support dynamic provisioning of Kubernetes Persistent Volumes via Persistent Volume Claims. Persistent volumes are provisioned as `${namespace}-${pvcName}-${pvName}`.
 
 Note: This repository is migrated from https://github.com/kubernetes-incubator/external-storage/tree/master/nfs-client. As part of the migration:
-- The container image name and repository has changed to `k8s.gcr.io/sig-storage` and `nfs-subdir-external-provisioner` respectively.
+- The container image name and repository has changed to `registry.k8s.io/sig-storage` and `nfs-subdir-external-provisioner` respectively.
 - To maintain backward compatibility with earlier deployment files, the naming of NFS Client Provisioner is retained as `nfs-client-provisioner` in the deployment YAMLs.
 - One of the pending areas for development on this repository is to add automated e2e tests. If you would like to contribute, please raise an issue or reach us on the Kubernetes slack #sig-storage channel.
 
@@ -24,7 +24,126 @@ $ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/n
     --set nfs.path=/exported/path
 ```
 
-### Without Helm
+### With Kustomize
+
+**Step 1: Get connection information for your NFS server**
+
+Make sure your NFS server is accessible from your Kubernetes cluster and get the information you need to connect to it. At a minimum you will need its hostname and exported share path.
+
+**Step 2: Add the base resource**
+
+Create a `kustomization.yaml` file in a directory of your choice, and add the [deploy](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/tree/master/deploy) directory as a base. This will use the kustomization file within that directory as our base.
+
+```yaml
+namespace: nfs-provisioner
+bases:
+  - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
+```
+
+**Step 3: Create namespace resource**
+
+Create a file with your namespace resource. The name can be anything as it will get overwritten by the namespace in your kustomization file.
+
+```yaml
+# namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nfs-provisioner
+```
+
+**Step 4: Configure deployment**
+
+To configure the deployment, you will need to patch it's container variables with the connection information for your NFS Server.
+
+```yaml
+# patch_nfs_details.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nfs-client-provisioner
+  name: nfs-client-provisioner
+spec:
+  template:
+    spec:
+      containers:
+        - name: nfs-client-provisioner
+          env:
+            - name: NFS_SERVER
+              value: <YOUR_NFS_SERVER_IP>
+            - name: NFS_PATH
+              value: <YOUR_NFS_SERVER_SHARE>
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: <YOUR_NFS_SERVER_IP>
+            path: <YOUR_NFS_SERVER_SHARE>
+```
+
+Replace occurrences of `<YOUR_NFS_SERVER_IP>` and `<YOUR_NFS_SERVER_SHARE>` with your connection information.
+
+**Step 5: Add resources and deploy**
+
+Add the namespace resource and patch you created in earlier steps.
+
+```yaml
+namespace: nfs-provisioner
+bases:
+  - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
+resources:
+  - namespace.yaml
+patchesStrategicMerge:
+  - patch_nfs_details.yaml
+```
+
+Deploy (run inside directory with your kustomization file):
+
+```sh
+kubectl apply -k .
+```
+
+**Step 6: Finally, test your environment!**
+
+Now we'll test your NFS subdir external provisioner by creating a persistent volume claim and a pod that writes a test file to the volume. This will make sure that the provisioner is provisioning and that the NFS server is reachable and writable.
+
+Deploy the test resources:
+
+```sh
+$ kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
+```
+
+Now check your NFS Server for the `SUCCESS` inside the PVC's directory.
+
+Delete the test resources:
+
+```sh
+$ kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
+```
+
+Now check the PVC's directory has been deleted.
+
+**Step 7: Deploying your own PersistentVolumeClaims**
+
+To deploy your own PVC, make sure that you have the correct `storageClassName` (by default `nfs-client`). You can also patch the StorageClass resource to change it, like so:
+
+```yaml
+# kustomization.yaml
+namespace: nfs-provisioner
+resources:
+  - github.com/kubernetes-sigs/nfs-subdir-external-provisioner//deploy
+  - namespace.yaml
+patches:
+- target:
+    kind: StorageClass
+    name: nfs-client
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: <YOUR-STORAGECLASS-NAME>
+```
+
+### Manually
 
 **Step 1: Get connection information for your NFS server**
 
@@ -89,7 +208,7 @@ spec:
       serviceAccountName: nfs-client-provisioner
       containers:
         - name: nfs-client-provisioner
-          image: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
           volumeMounts:
             - name: nfs-client-root
               mountPath: /persistentvolumes
@@ -127,7 +246,7 @@ This is `deploy/class.yaml` which defines the NFS subdir external provisioner's 
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: managed-nfs-storage
+  name: nfs-client
 provisioner: k8s-sigs.io/nfs-subdir-external-provisioner # or choose another name, must match deployment's env PROVISIONER_NAME'
 parameters:
   pathPattern: "${.PVC.namespace}/${.PVC.annotations.nfs.io/storage-path}" # waits for nfs.io/storage-path annotation, if not specified will accept as empty string.
@@ -169,7 +288,7 @@ metadata:
     nfs.io/createGID: "1000" # set folder gid as createGID on creation, not required, default 0 (root)
     nfs.io/createMode: "0755" # set folder mode as createMode on creation, not required, default 0777 (a+rwx)
 spec:
-  storageClassName: managed-nfs-storage
+  storageClassName: nfs-client
   accessModes:
     - ReadWriteMany
   resources:
@@ -184,7 +303,7 @@ To build your own custom container image from this repository, you will have to 
 ```sh
 make build
 make container
-# `nfs-subdir-external-provisioner:latest` will be created. 
+# `nfs-subdir-external-provisioner:latest` will be created.
 # Note: This will build a single-arch image that matches the machine on which container is built.
 # To upload this to your custom registry, say `quay.io/myorg` and arch as amd64, you can use
 # docker tag nfs-subdir-external-provisioner:latest quay.io/myorg/nfs-subdir-external-provisioner-amd64:latest
@@ -209,4 +328,7 @@ The pipeline adds several labels:
 * You also need to provide the `DOCKER_IMAGE` secret specifying your Docker image name, e.g., `quay.io/[username]/nfs-subdir-external-provisioner`.
 
 
-
+## NFS provisioner limitations/pitfalls
+* The provisioned storage is not guaranteed. You may allocate more than the NFS share's total size. The share may also not have enough storage space left to actually accommodate the request.
+* The provisioned storage limit is not enforced. The application can expand to use all the available storage regardless of the provisioned size.
+* Storage resize/expansion operations are not presently supported in any form. You will end up in an error state: `Ignoring the PVC: didn't find a plugin capable of expanding the volume; waiting for an external controller to process this PVC.`

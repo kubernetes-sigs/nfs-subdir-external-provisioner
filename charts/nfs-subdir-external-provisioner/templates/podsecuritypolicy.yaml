@@ -13,6 +13,7 @@ spec:
   volumes:
     - 'secret'
     - 'nfs'
+    - 'persistentVolumeClaim'
   hostNetwork: false
   hostIPC: false
   hostPID: false

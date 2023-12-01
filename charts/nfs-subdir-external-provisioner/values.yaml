@@ -2,7 +2,7 @@ replicaCount: 1
 strategyType: Recreate
 
 image:
-  repository: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner
+  repository: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner
   tag: v4.0.2
   pullPolicy: IfNotPresent
 imagePullSecrets: []
@@ -12,6 +12,8 @@ nfs:
   path: /nfs-storage
   mountOptions:
   volumeName: nfs-subdir-external-provisioner-root
+  # Reclaim policy for the main nfs volume
+  reclaimPolicy: Retain
 
 # For creating the StorageClass automatically:
 storageClass:
@@ -49,6 +51,9 @@ storageClass:
   # Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany
   accessModes: ReadWriteOnce
 
+  # Set volume bindinng mode - Immediate or WaitForFirstConsumer
+  volumeBindingMode: Immediate
+
   # Storage class annotations
   annotations: {}
 
@@ -71,6 +76,10 @@ podAnnotations: {}
 
 ## Set pod priorityClassName
 # priorityClassName: ""
+
+podSecurityContext: {}
+
+securityContext: {}
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
@@ -99,3 +108,7 @@ affinity: {}
 
 # Additional labels for any resource created
 labels: {}
+
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
