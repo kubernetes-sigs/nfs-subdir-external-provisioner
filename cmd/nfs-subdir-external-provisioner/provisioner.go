@@ -111,7 +111,7 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 		}
 	}
 
-	createMode := os.FileMode(0777)
+	createMode := os.FileMode(0o777)
 	annotationCreateMode, exists := metadata.annotations["nfs.io/createMode"]
 	if exists {
 		annotationCreateModeUInt, err := strconv.ParseUint(annotationCreateMode, 8, 32)
