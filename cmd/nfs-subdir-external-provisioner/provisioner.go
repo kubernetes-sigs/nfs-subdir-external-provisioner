@@ -141,14 +141,14 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
 	err := os.Chmod(fullPath, createMode)
-  if err != nil {
+	if err != nil {
 		return nil, "", err
 	}
-  err := os.Chown(fullPath, uid, gid)
-  if err != nil {
+	err = os.Chown(fullPath, uid, gid)
+	if err != nil {
 		return nil, "", err
 	}
-	
+
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: options.PVName,
