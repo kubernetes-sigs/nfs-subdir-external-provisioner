@@ -39,8 +39,8 @@ jobs:
           elif [[ $GITHUB_REF == refs/pull/* ]]; then
             TAGS="${{ secrets.DOCKER_IMAGE }}:pr-${{ github.event.number }}"
           fi
-          echo ::set-output name=tags::${TAGS}
-          echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
