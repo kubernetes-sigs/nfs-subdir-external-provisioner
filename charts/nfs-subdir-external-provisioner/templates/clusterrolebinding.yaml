@@ -8,7 +8,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: {{ template "nfs-subdir-external-provisioner.serviceAccountName" . }}
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ template "nfs-subdir-external-provisioner.namespace" . }}
 roleRef:
   kind: ClusterRole
   name: {{ template "nfs-subdir-external-provisioner.fullname" . }}-runner
