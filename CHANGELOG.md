@@ -1,3 +1,13 @@
+# v4.0.3
+
+- Prevent mounting of root directory on empty customPath (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/83)
+- Upgrade k8s client to v1.23.4 (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/175)
+- Add error handling to chmod on volume creation (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/176)
+- Import GetPersistentVolumeClass from component-helpers (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/189)
+- Resolve CVE-2022-27191 in golang.org/x/crypto (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/207)
+- Fix onDelete option for subdirectories (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/221)
+- Resolve all trivy vulnerabilities up to 2024-01-25 (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/327)
+
 # v4.0.2
 - Add arm7 (32bit) support (https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/pull/58)
 
