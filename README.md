@@ -186,7 +186,7 @@ $ oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:$NAMESPAC
 
 If you would like to use a custom built nfs-subdir-external-provisioner image, you must edit the provisioner's deployment file to specify the correct location of your `nfs-client-provisioner` container image.
 
-Next you must edit the provisioner's deployment file to add connection information for your NFS server. Edit `deploy/deployment.yaml` and replace the two occurences of <YOUR NFS SERVER HOSTNAME> with your server's hostname.
+Next you must edit the provisioner's deployment file to add connection information for your NFS server. Edit `deploy/deployment.yaml` and replace the two occurrences of <YOUR NFS SERVER HOSTNAME> with your server's hostname.
 
 ```yaml
 kind: Deployment
@@ -234,11 +234,11 @@ To disable leader election, define an env variable named ENABLE_LEADER_ELECTION 
 
 **_Parameters:_**
 
-| Name            | Description                                                                                                                                                                  |                             Default                              |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------: |
-| onDelete        | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory.                                                          | will be archived with name on the share: `archived-<volume.Name>` |
-| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored.                                                           | will be archived with name on the share: `archived-<volume.Name>` |
-| pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.<metadata>}`. Example: If folder should be named like `<pvc-namespace>-<pvc-name>`, use `${.PVC.namespace}-${.PVC.name}` as pathPattern. |                               n/a                                |
+| Name            | Description                                                  |                           Default                            |
+| --------------- | ------------------------------------------------------------ | :----------------------------------------------------------: |
+| onDelete        | If it exists and has a delete value, delete the directory, if it exists and has a retain value, save the directory. | will be archived with name on the share: `archived-<volume.Name>` |
+| archiveOnDelete | If it exists and has a false value, delete the directory. if `onDelete` exists, `archiveOnDelete` will be ignored. | will be archived with name on the share: `archived-<volume.Name>` |
+| pathPattern     | Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace. To specify metadata use `${.PVC.<metadata>}`. Example: If folder should be named like `<pvc-namespace>-<pvc-name>`, use `${.PVC.namespace}-${.PVC.name}` as pathPattern. The default pattern will add the pvname to folder, which will result in a unique folder name, combining namespace, name and an unique id. | `${.PVC.namespace}-${.PVC.name}-${.PVC.pvname}` |
 
 This is `deploy/class.yaml` which defines the NFS subdir external provisioner's Kubernetes Storage Class:
 
