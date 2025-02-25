@@ -41,6 +41,7 @@ import (
 
 const (
 	provisionerNameKey = "PROVISIONER_NAME"
+	defaultPermission  = 0o770
 )
 
 type nfsProvisioner struct {
@@ -79,6 +80,18 @@ const (
 
 var _ controller.Provisioner = &nfsProvisioner{}
 
+func getFilePermission() os.FileMode {
+	permStr := os.Getenv("NFS_VOLUME_PERMISSION")
+	if permStr != "" {
+		perm, err := strconv.ParseUint(permStr, 8, 32)
+		if err == nil {
+			return os.FileMode(perm)
+		}
+		glog.Warningf("Invalid NFS_VOLUME_PERMISSION value: %s, using default %o", permStr, defaultPermission)
+	}
+	return defaultPermission
+}
+
 func (p *nfsProvisioner) Provision(ctx context.Context, options controller.ProvisionOptions) (*v1.PersistentVolume, controller.ProvisioningState, error) {
 	if options.PVC.Spec.Selector != nil {
 		return nil, controller.ProvisioningFinished, fmt.Errorf("claim Selector is not supported")
@@ -112,10 +125,10 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	}
 
 	glog.V(4).Infof("creating path %s", fullPath)
-	if err := os.MkdirAll(fullPath, 0o777); err != nil {
+	if err := os.MkdirAll(fullPath, getFilePermission()); err != nil {
 		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
-	err := os.Chmod(fullPath, 0o777)
+	err := os.Chmod(fullPath, getFilePermission())
 	if err != nil {
 		return nil, "", err
 	}
