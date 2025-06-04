@@ -13,7 +13,7 @@ WORKDIR ${APP_FOLDER}
 ARG TARGETPLATFORM
 RUN CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o /bin/main ./cmd/nfs-subdir-external-provisioner
 
-FROM --platform=$TARGETPLATFORM alpine:3.18
+FROM --platform=$TARGETPLATFORM alpine:3.22
 
 RUN apk update --no-cache && apk add ca-certificates
 COPY --from=build-env /bin/main /app/main
