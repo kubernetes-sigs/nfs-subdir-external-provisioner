@@ -293,6 +293,18 @@ spec:
       storage: 1Mi
 ```
 
+**Step 8: Controlling the permissions and ownership of subdirs**
+
+By default new directories will be created with `root:root` ownership, and `0777` permissions in most environments. If you have a need to control this, you can do so by providing the `NFS_DEFAULT_MODE`, `NFS_DEFAULT_UID` and `NFS_DEFAULT_GID` environment variables (or the appropriate configuration in the Helm chart values). The mode must be an octal representation of a file mode, for example `777`, `0755` etc. The uid and gid must be the numeric ids of your desired user and group, so `1000` not `my_user`. 
+
+If your usecase requires per-PVC ownership and/or mode, this can be done via annotations on your PVC:
+
+- `k8s-sigs.io/nfs-directory-mode`
+- `k8s-sigs.io/nfs-directory-uid`
+- `k8s-sigs.io/nfs-directory-gid`
+
+The order of precedence is PVC annotations, ENV vars, then root:root 0777 if nothing else has been specified. 
+
 # Build and publish your own container image
 
 To build your own custom container image from this repository, you will have to build and push the nfs-subdir-external-provisioner image using the following instructions.

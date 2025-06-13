@@ -44,9 +44,12 @@ const (
 )
 
 type nfsProvisioner struct {
-	client kubernetes.Interface
-	server string
-	path   string
+	client      kubernetes.Interface
+	server      string
+	path        string
+	defaultMode os.FileMode
+	defaultUid  int
+	defaultGid  int
 }
 
 type pvcMetadata struct {
@@ -74,7 +77,8 @@ func (meta *pvcMetadata) stringParser(str string) string {
 }
 
 const (
-	mountPath = "/persistentvolumes"
+	mountPath        = "/persistentvolumes"
+	annotationPrefix = "k8s-sigs.io"
 )
 
 var _ controller.Provisioner = &nfsProvisioner{}
@@ -111,15 +115,54 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 		}
 	}
 
+	// Check if the PVC has an annotation requesting a specific mode. Fallback to defaults if not.
+	mode := p.defaultMode
+	pvcMode := metadata.annotations[annotationPrefix+"/nfs-directory-mode"]
+	if pvcMode != "" {
+		var err error
+		mode, err = getModeFromString(pvcMode)
+		if err != nil {
+			return nil, controller.ProvisioningFinished, fmt.Errorf("invalid directoryMode %s: %v", pvcMode, err)
+		}
+	}
 	glog.V(4).Infof("creating path %s", fullPath)
-	if err := os.MkdirAll(fullPath, 0o777); err != nil {
+	if err := os.MkdirAll(fullPath, mode); err != nil {
 		return nil, controller.ProvisioningFinished, errors.New("unable to create directory to provision new pv: " + err.Error())
 	}
-	err := os.Chmod(fullPath, 0o777)
+	err := os.Chmod(fullPath, mode)
 	if err != nil {
 		return nil, "", err
 	}
 
+	// Check if the PVC has an annotation requesting a specific UID and GID. Again, fallback to defaults if not.
+	uid := p.defaultUid
+	pvcUid := metadata.annotations[annotationPrefix+"/nfs-directory-uid"]
+	if pvcUid != "" {
+		var err error
+		uid, err = getIdFromString(pvcUid)
+		if err != nil {
+			// No real point in returning an error here as the dir will have already been created as root:root
+			// log the error and continue with the default uid
+			glog.Errorf("invalid directoryUid %s: %v", pvcUid, err)
+			uid = p.defaultUid
+		}
+	}
+	gid := p.defaultGid
+	pvcGid := metadata.annotations[annotationPrefix+"/nfs-directory-gid"]
+	if pvcGid != "" {
+		var err error
+		gid, err = getIdFromString(pvcGid)
+		if err != nil {
+			// No real point in returning an error here as the dir will have already been created as root:root
+			// log the error and continue with the default gid
+			glog.Errorf("invalid directoryGid %s: %v", pvcGid, err)
+			gid = p.defaultGid
+		}
+	}
+	err = os.Chown(fullPath, uid, gid)
+	if err != nil {
+		return nil, "", err
+	}
 	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: options.PVName,
@@ -205,6 +248,36 @@ func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *v1.Persisten
 	return class, nil
 }
 
+func getModeFromString(mode string) (os.FileMode, error) {
+	if mode == "" {
+		return os.FileMode(0o777), nil // Default to 0777, per current behavior
+	}
+	var modeInt int64
+	var err error
+	modeInt, err = strconv.ParseInt(mode, 8, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid mode %s: %v", mode, err)
+	}
+	if modeInt < 0 || modeInt > 0o777 {
+		return 0, fmt.Errorf("mode must be between 0 and 0777, got %s", mode)
+	}
+	return os.FileMode(modeInt), nil
+}
+
+func getIdFromString(id string) (int, error) {
+	if id == "" {
+		return 0, nil // Default to 0 aka root, per current behavior
+	}
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, fmt.Errorf("invalid id %s: %v", id, err)
+	}
+	if idInt < 0 || idInt > 65535 {
+		return 0, fmt.Errorf("id must be between 0 and 65535, got %s", id)
+	}
+	return idInt, nil
+}
+
 func main() {
 	flag.Parse()
 	flag.Set("logtostderr", "true")
@@ -220,6 +293,19 @@ func main() {
 	provisionerName := os.Getenv(provisionerNameKey)
 	if provisionerName == "" {
 		glog.Fatalf("environment variable %s is not set! Please set it.", provisionerNameKey)
+	}
+	// Get the default mode, uid, and gid from environment variables
+	mode, err := getModeFromString(os.Getenv("NFS_DEFAULT_MODE"))
+	if err != nil {
+		glog.Fatalf("Failed to parse NFS_DEFAULT_MODE: %v", err)
+	}
+	uid, err := getIdFromString(os.Getenv("NFS_DEFAULT_UID"))
+	if err != nil {
+		glog.Fatalf("Failed to parse NFS_DEFAULT_UID: %v", err)
+	}
+	gid, err := getIdFromString(os.Getenv("NFS_DEFAULT_GID"))
+	if err != nil {
+		glog.Fatalf("Failed to parse NFS_DEFAULT_GID: %v", err)
 	}
 	kubeconfig := os.Getenv("KUBECONFIG")
 	var config *rest.Config
@@ -262,9 +348,12 @@ func main() {
 	}
 
 	clientNFSProvisioner := &nfsProvisioner{
-		client: clientset,
-		server: server,
-		path:   path,
+		client:      clientset,
+		server:      server,
+		path:        path,
+		defaultMode: mode,
+		defaultUid:  uid,
+		defaultGid:  gid,
 	}
 	// Start the provision controller which will dynamically provision efs NFS
 	// PVs

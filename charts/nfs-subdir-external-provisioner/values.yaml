@@ -12,6 +12,9 @@ nfs:
   path: /nfs-storage
   mountOptions:
   volumeName: nfs-subdir-external-provisioner-root
+  defaultMode: "777"
+  defaultUid: "0"
+  defaultGid: "0"
   # Reclaim policy for the main nfs volume
   reclaimPolicy: Retain
 

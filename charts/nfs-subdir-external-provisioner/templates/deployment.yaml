@@ -57,6 +57,12 @@ spec:
               value: {{ .Values.nfs.server }}
             - name: NFS_PATH
               value: {{ .Values.nfs.path }}
+            - name: NFS_DEFAULT_MODE
+              value: {{ .Values.nfs.defaultMode}}
+            - name: NFS_DEFAULT_UID
+              value: {{ .Values.nfs.defaultUid }}
+            - name: NFS_DEFAULT_GID
+              value: {{ .Values.nfs.defaultGid }}
             {{- if eq .Values.leaderElection.enabled false }}
             - name: ENABLE_LEADER_ELECTION
               value: "false"
