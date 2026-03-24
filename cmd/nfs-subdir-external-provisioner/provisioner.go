@@ -29,6 +29,7 @@ import (
 
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -279,8 +280,14 @@ func getIdFromString(id string) (int, error) {
 }
 
 func main() {
+	klog.InitFlags(nil)
 	flag.Parse()
 	flag.Set("logtostderr", "true")
+
+	// Opt into the new klog behavior where -stderrthreshold is honored even
+	// when -logtostderr=true (see kubernetes/klog#212, kubernetes/klog#432).
+	flag.Set("legacy_stderr_threshold_behavior", "false") //nolint:errcheck
+	flag.Set("stderrthreshold", "INFO")                   //nolint:errcheck
 
 	server := os.Getenv("NFS_SERVER")
 	if server == "" {
