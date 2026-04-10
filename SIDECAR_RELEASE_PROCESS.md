@@ -17,7 +17,7 @@ The release manager must:
 Whenever a new Kubernetes minor version is released, our kubernetes-csi CI jobs
 must be updated.
 
-[Our CI jobs](https://k8s-testgrid.appspot.com/sig-storage-csi-ci) have the
+[Our CI jobs](https://testgrid.k8s.io/sig-storage-csi-ci) have the
 naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 
 1. Jobs should be actively monitored to find and fix failures in sidecars and
@@ -46,52 +46,51 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 ## Release Process
 1. Identify all issues and ongoing PRs that should go into the release, and
   drive them to resolution.
-1. Download the latest version of the
-   [K8s release notes generator](https://github.com/kubernetes/release/tree/HEAD/cmd/release-notes)
-1. Create a
-   [Github personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
-   with `repo:public_repo` access
-1. Generate release notes for the release. Replace arguments with the relevant
-   information.
-    * Clean up old cached information (also needed if you are generating release
-      notes for multiple repos)
-      ```bash
-      rm -rf /tmp/k8s-repo
-      ```
-    * For new minor releases on master:
-        ```bash
-        GITHUB_TOKEN=<token> release-notes \
-          --discover=mergebase-to-latest \
-          --org=kubernetes-csi \
-          --repo=external-provisioner \
-          --required-author="" \
-          --markdown-links \
-          --output out.md
-        ```
-    * For new patch releases on a release branch:
-        ```bash
-        GITHUB_TOKEN=<token> release-notes \
-          --discover=patch-to-latest \
-          --branch=release-1.1 \
-          --org=kubernetes-csi \
-          --repo=external-provisioner \
-          --required-author="" \
-          --markdown-links \
-          --output out.md
-        ```
-1. Compare the generated output to the new commits for the release to check if
-   any notable change missed a release note.
-1. Reword release notes as needed. Make sure to check notes for breaking
-   changes and deprecations.
-1. If release is a new major/minor version, create a new `CHANGELOG-<major>.<minor>.md`
-   file. Otherwise, add the release notes to the top of the existing CHANGELOG
-   file for that minor version.
-1. Submit a PR for the CHANGELOG changes.
+1. Update dependencies for sidecars
+    1. For new minor versions, use
+   [go-modules-update.sh](https://github.com/kubernetes-csi/csi-release-tools/blob/HEAD/go-modules-update.sh),
+    1. For CVE fixes on patch versions, use
+   [go-modules-targeted-update.sh](https://github.com/kubernetes-csi/csi-release-tools/blob/HEAD/go-modules-targeted-update.sh),
+       Read the instructions at the top of the script.
+1. Check that all [canary CI
+  jobs](https://testgrid.k8s.io/sig-storage-csi-ci) are passing,
+  and that test coverage is adequate for the changes that are going into the release.
+1. Check that the post-\<sidecar\>-push-images builds are succeeding.
+   [Example](https://testgrid.k8s.io/sig-storage-image-build#post-external-snapshotter-push-images)
+1. Generate release notes.
+    1.  Download the latest version of the [K8s release notes generator](https://github.com/kubernetes/release/tree/HEAD/cmd/release-notes)
+    1. Create a
+       [Github personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+       with `repo:public_repo` access
+    1. For patch release, use the script generate_patch_release_notes.sh. Read the instructions at the top of the
+       script. The script also creates PRs for each branch.
+    1. For new minor releases, follow these steps and replace arguments with the relevant
+       information.
+        * Clean up old cached information (also needed if you are generating release
+          notes for multiple repos)
+          ```bash
+          rm -rf /tmp/k8s-repo
+          ```
+        * For new minor releases on master:
+            ```bash
+            GITHUB_TOKEN=<token> release-notes \
+              --discover=mergebase-to-latest \
+              --org=kubernetes-csi \
+              --repo=external-provisioner \
+              --required-author="" \
+              --markdown-links \
+              --output out.md
+            ```
+    1. Compare the generated output to the new commits for the release to check if
+       any notable change missed a release note.
+    1. Reword release notes as needed, ideally in the original PRs so that the
+       release notes can be regenerated. Make sure to check notes for breaking
+       changes and deprecations.
+    1. If release is a new major/minor version, create a new `CHANGELOG-<major>.<minor>.md`
+       file.
+    1. Submit a PR for the CHANGELOG changes.
 1. Submit a PR for README changes, in particular, Compatibility, Feature status,
    and any other sections that may need updating.
-1. Check that all [canary CI
-  jobs](https://k8s-testgrid.appspot.com/sig-storage-csi-ci) are passing,
-  and that test coverage is adequate for the changes that are going into the release.
 1. Make sure that no new PRs have merged in the meantime, and no PRs are in
    flight and soon to be merged.
 1. Create a new release following a previous release as a template. Be sure to select the correct
@@ -99,10 +98,10 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
    [external-provisioner example](https://github.com/kubernetes-csi/external-provisioner/releases/new)
 1. If release was a new major/minor version, create a new `release-<minor>`
    branch at that commit.
-1. Check [image build status](https://k8s-testgrid.appspot.com/sig-storage-image-build).
-1. Promote images from k8s-staging-sig-storage to k8s.gcr.io/sig-storage. From
+1. Check [image build status](https://testgrid.k8s.io/sig-storage-image-build).
+1. Promote images from k8s-staging-sig-storage to registry.k8s.io/sig-storage. From
    the [k8s image
-   repo](https://github.com/kubernetes/k8s.io/tree/HEAD/k8s.gcr.io/images/k8s-staging-sig-storage),
+   repo](https://github.com/kubernetes/k8s.io/tree/HEAD/registry.k8s.io/images/k8s-staging-sig-storage),
    run `./generate.sh > images.yaml`, and send a PR with the updated images.
    Once merged, the image promoter will copy the images from staging to prod.
 1. Update [kubernetes-csi/docs](https://github.com/kubernetes-csi/docs) sidecar
@@ -118,7 +117,7 @@ naming convention `<hostpath-deployment-version>-on-<kubernetes-version>`.
 
 The following jobs are triggered after tagging to produce the corresponding
 image(s):
-https://k8s-testgrid.appspot.com/sig-storage-image-build
+https://testgrid.k8s.io/sig-storage-image-build
 
 Clicking on a failed build job opens that job in https://prow.k8s.io. Next to
 the job title is a rerun icon (circle with arrow). Clicking it opens a popup
