@@ -8,6 +8,7 @@ aliases:
   - jsafrane
   - msau42
   - saad-ali
+  - gnufied
   - xing-yang
 
   # Reviewers are automatically assigned to new PRs. The following
@@ -18,21 +19,23 @@ aliases:
   # when they are temporarily unable to review PRs.
   kubernetes-csi-reviewers:
   - andyzhangx
-  - chrishenzie
+  - carlory
   - ggriffiths
   - gnufied
   - humblec
+  - mauriciopoppe
   - j-griffith
-  - Jiawei0227
   - jingxu97
   - jsafrane
   - pohly
   - RaunakShah
+  - sunnylovestiramisu
   - xing-yang
 
 # This documents who previously contributed to Kubernetes-CSI
 # as approver.
 emeritus_approvers:
+- Jiawei0227
 - lpabon
 - sbezverk
 - vladimirvivien
