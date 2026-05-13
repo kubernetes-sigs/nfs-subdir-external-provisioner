@@ -258,10 +258,20 @@ func getModeFromString(mode string) (os.FileMode, error) {
 	if err != nil {
 		return 0, fmt.Errorf("invalid mode %s: %v", mode, err)
 	}
-	if modeInt < 0 || modeInt > 0o777 {
-		return 0, fmt.Errorf("mode must be between 0 and 0777, got %s", mode)
+	if modeInt < 0 || modeInt > 0o7777 {
+		return 0, fmt.Errorf("mode must be between 0 and 07777, got %s", mode)
 	}
-	return os.FileMode(modeInt), nil
+	fileMode := os.FileMode(modeInt & 0o777)
+	if modeInt&0o4000 != 0 {
+		fileMode |= os.ModeSetuid
+	}
+	if modeInt&0o2000 != 0 {
+		fileMode |= os.ModeSetgid
+	}
+	if modeInt&0o1000 != 0 {
+		fileMode |= os.ModeSticky
+	}
+	return fileMode, nil
 }
 
 func getIdFromString(id string) (int, error) {
