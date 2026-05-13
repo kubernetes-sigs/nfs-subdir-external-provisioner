@@ -20,11 +20,17 @@
 
 set -ex
 
+# Prow checks out repos with --filter=blob:none. This breaks
+# "git subtree pull" unless we enable fetching missing file content.
+GIT_NO_LAZY_FETCH=0
+export GIT_NO_LAZY_FETCH
+
 # It must be called inside the updated csi-release-tools repo.
 CSI_RELEASE_TOOLS_DIR="$(pwd)"
 
 # Update the other repo.
 cd "$PULL_TEST_REPO_DIR"
+git reset --hard # Shouldn't be necessary, but somehow is to avoid "fatal: working tree has modifications.  Cannot add." (https://stackoverflow.com/questions/3623351/git-subtree-pull-says-that-the-working-tree-has-modifications-but-git-status-sa)
 git subtree pull --squash --prefix=release-tools "$CSI_RELEASE_TOOLS_DIR" master
 git log -n2
 
