@@ -295,7 +295,7 @@ spec:
 
 **Step 8: Controlling the permissions and ownership of subdirs**
 
-By default new directories will be created with `root:root` ownership, and `0777` permissions in most environments. If you have a need to control this, you can do so by providing the `NFS_DEFAULT_MODE`, `NFS_DEFAULT_UID` and `NFS_DEFAULT_GID` environment variables (or the appropriate configuration in the Helm chart values). The mode must be an octal representation of a file mode, for example `777`, `0755` etc. The uid and gid must be the numeric ids of your desired user and group, so `1000` not `my_user`. 
+By default new directories will be created with `root:root` ownership, and `0777` permissions in most environments. If you have a need to control this, you can do so by providing the `NFS_DEFAULT_MODE`, `NFS_DEFAULT_UID` and `NFS_DEFAULT_GID` environment variables (or the appropriate configuration in the Helm chart values). The mode must be an octal representation of a file mode, for example `777`, `0755`, `2750` etc. The uid and gid must be the numeric ids of your desired user and group, so `1000` not `my_user`. 
 
 If your usecase requires per-PVC ownership and/or mode, this can be done via annotations on your PVC:
 
