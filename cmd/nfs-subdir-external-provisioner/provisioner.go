@@ -28,7 +28,8 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	v1 "k8s.io/api/core/v1"
+	"github.com/kubernetes-sigs/nfs-subdir-external-provisioner/version"
+	corev1 "k8s.io/api/core/v1"
 
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,7 +84,7 @@ const (
 
 var _ controller.Provisioner = &nfsProvisioner{}
 
-func (p *nfsProvisioner) Provision(ctx context.Context, options controller.ProvisionOptions) (*v1.PersistentVolume, controller.ProvisioningState, error) {
+func (p *nfsProvisioner) Provision(ctx context.Context, options controller.ProvisionOptions) (*corev1.PersistentVolume, controller.ProvisioningState, error) {
 	if options.PVC.Spec.Selector != nil {
 		return nil, controller.ProvisioningFinished, fmt.Errorf("claim Selector is not supported")
 	}
@@ -163,19 +164,19 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	if err != nil {
 		return nil, "", err
 	}
-	pv := &v1.PersistentVolume{
+	pv := &corev1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: options.PVName,
 		},
-		Spec: v1.PersistentVolumeSpec{
+		Spec: corev1.PersistentVolumeSpec{
 			PersistentVolumeReclaimPolicy: *options.StorageClass.ReclaimPolicy,
 			AccessModes:                   options.PVC.Spec.AccessModes,
 			MountOptions:                  options.StorageClass.MountOptions,
-			Capacity: v1.ResourceList{
-				v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
+			Capacity: corev1.ResourceList{
+				corev1.ResourceName(corev1.ResourceStorage): options.PVC.Spec.Resources.Requests[corev1.ResourceName(corev1.ResourceStorage)],
 			},
-			PersistentVolumeSource: v1.PersistentVolumeSource{
-				NFS: &v1.NFSVolumeSource{
+			PersistentVolumeSource: corev1.PersistentVolumeSource{
+				NFS: &corev1.NFSVolumeSource{
 					Server:   p.server,
 					Path:     path,
 					ReadOnly: false,
@@ -186,7 +187,7 @@ func (p *nfsProvisioner) Provision(ctx context.Context, options controller.Provi
 	return pv, controller.ProvisioningFinished, nil
 }
 
-func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume) error {
+func (p *nfsProvisioner) Delete(ctx context.Context, volume *corev1.PersistentVolume) error {
 	path := volume.Spec.PersistentVolumeSource.NFS.Path
 	basePath := filepath.Base(path)
 	oldPath := strings.Replace(path, p.path, mountPath, 1)
@@ -232,7 +233,7 @@ func (p *nfsProvisioner) Delete(ctx context.Context, volume *v1.PersistentVolume
 }
 
 // getClassForVolume returns StorageClass.
-func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *v1.PersistentVolume) (*storage.StorageClass, error) {
+func (p *nfsProvisioner) getClassForVolume(ctx context.Context, pv *corev1.PersistentVolume) (*storage.StorageClass, error) {
 	if p.client == nil {
 		return nil, fmt.Errorf("cannot get kube client")
 	}
@@ -279,6 +280,9 @@ func getIdFromString(id string) (int, error) {
 }
 
 func main() {
+	fmt.Println(version.Term())
+	version.Print()
+
 	flag.Parse()
 	flag.Set("logtostderr", "true")
 
