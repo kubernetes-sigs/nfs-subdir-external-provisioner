@@ -228,7 +228,18 @@ spec:
 
 Note: If you want to change the PROVISIONER_NAME above from `k8s-sigs.io/nfs-subdir-external-provisioner` to something else like `myorg/nfs-storage`, remember to also change the PROVISIONER_NAME in the storage class definition below.
 
-To disable leader election, define an env variable named ENABLE_LEADER_ELECTION and set its value to false.
+**Leader election configuration:**
+
+The provisioner supports leader election to ensure only one replica is active at a time. The following environment variables configure leader election:
+
+| Env Variable | Default | Description |
+|-------------|---------|-------------|
+| `ENABLE_LEADER_ELECTION` | `true` | Set to `"false"` to disable leader election entirely. |
+| `LEADER_ELECTION_LEASE_DURATION` | `15s` | Time that non-leader candidates wait before attempting to acquire leadership. Must be greater than renew deadline. |
+| `LEADER_ELECTION_RENEW_DEADLINE` | `10s` | Time the current leader will retry refreshing leadership before giving up. Must be greater than retry period. |
+| `LEADER_ELECTION_RETRY_PERIOD` | `2s` | Interval between leadership renewal attempts. |
+
+> **Tuning for large clusters:** If you experience leader election timeouts due to etcd compaction or API server latency spikes, increase `LEADER_ELECTION_RENEW_DEADLINE` (e.g., `30s` or `60s`) and adjust `LEADER_ELECTION_RETRY_PERIOD` proportionally. Both `renewDeadline > retryPeriod` and `leaseDuration > renewDeadline` must hold.
 
 **Step 5: Deploying your storage class**
 
