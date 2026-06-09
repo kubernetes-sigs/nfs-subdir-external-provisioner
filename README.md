@@ -42,7 +42,7 @@ images. Building from master creates the main `canary` image.
 Sharing and updating
 --------------------
 
-[`git subtree`](https://github.com/git/git/blob/HEAD/contrib/subtree/git-subtree.txt)
+[`git subtree`](https://github.com/git/git/blob/HEAD/contrib/subtree/git-subtree.adoc)
 is the recommended way of maintaining a copy of the rules inside the
 `release-tools` directory of a project. This way, it is possible to make
 changes also locally, test them and then push them back to the shared
