@@ -14,19 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ -f Gopkg.toml ]; then
-    echo "Repo uses 'dep' for vendoring."
-    case "$(dep version 2>/dev/null | grep 'version *:')" in
-	*v0.[56789]*)
-            if dep check; then
-                echo "vendor up-to-date"
-            else
-                exit 1
-            fi
-            ;;
-	*) echo "skipping check, dep >= 0.5 required";;
-    esac
-elif [ -f go.mod ]; then
+if [ -f go.mod ]; then
     echo "Repo uses 'go mod'."
     # shellcheck disable=SC2235
     if [ "${JOB_NAME}" ] &&
