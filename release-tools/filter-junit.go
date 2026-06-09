@@ -24,7 +24,6 @@ package main
 import (
 	"encoding/xml"
 	"flag"
-	"io/ioutil"
 	"os"
 	"regexp"
 )
@@ -56,6 +55,7 @@ type TestCase struct {
 	Name      string     `xml:"name,attr"`
 	Time      string     `xml:"time,attr"`
 	SystemOut string     `xml:"system-out,omitempty"`
+	SystemErr string     `xml:"system-err,omitempty"`
 	Failure   string     `xml:"failure,omitempty"`
 	Skipped   SkipReason `xml:"skipped,omitempty"`
 }
@@ -95,7 +95,7 @@ func main() {
 			}
 		} else {
 			var err error
-			data, err = ioutil.ReadFile(input)
+			data, err = os.ReadFile(input)
 			if err != nil {
 				panic(err)
 			}
@@ -109,7 +109,7 @@ func main() {
 			if err := xml.Unmarshal(data, &junitv2); err != nil {
 				panic(err)
 			}
-			junit = junitv2.TestSuite
+			junit.TestCases = append(junit.TestCases, junitv2.TestSuite.TestCases...)
 		}
 	}
 
@@ -142,7 +142,7 @@ func main() {
 			panic(err)
 		}
 	} else {
-		if err := ioutil.WriteFile(*output, data, 0644); err != nil {
+		if err := os.WriteFile(*output, data, 0644); err != nil {
 			panic(err)
 		}
 	}
