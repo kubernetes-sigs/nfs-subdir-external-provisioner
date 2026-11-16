@@ -64,6 +64,15 @@ leaderElection:
   # When set to false leader election will be disabled
   enabled: true
 
+  # Leader election lease duration. Must be greater than renewDeadline.
+  leaseDuration: 15s
+
+  # Leader election renew deadline. Must be greater than retryPeriod.
+  renewDeadline: 10s
+
+  # Leader election retry period.
+  retryPeriod: 2s
+
 ## For RBAC support:
 rbac:
   # Specifies whether RBAC resources should be created

@@ -32,6 +32,12 @@ spec:
               value: 10.3.243.101
             - name: NFS_PATH
               value: /ifs/kubernetes
+            - name: LEADER_ELECTION_LEASE_DURATION
+              value: "15s"
+            - name: LEADER_ELECTION_RENEW_DEADLINE
+              value: "10s"
+            - name: LEADER_ELECTION_RETRY_PERIOD
+              value: "2s"
       volumes:
         - name: nfs-client-root
           nfs:

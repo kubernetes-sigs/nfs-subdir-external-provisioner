@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
@@ -347,6 +348,56 @@ func main() {
 		}
 	}
 
+	options := []func(*controller.ProvisionController) error{
+		controller.LeaderElection(leaderElection),
+	}
+
+	if leaderElection {
+		leaseDuration := controller.DefaultLeaseDuration
+		renewDeadline := controller.DefaultRenewDeadline
+		retryPeriod := controller.DefaultRetryPeriod
+
+		if v := os.Getenv("LEADER_ELECTION_LEASE_DURATION"); v != "" {
+			d, err := time.ParseDuration(v)
+			if err != nil {
+				glog.Fatalf("Unable to parse LEADER_ELECTION_LEASE_DURATION env var: %v", err)
+			}
+			leaseDuration = d
+		}
+		if v := os.Getenv("LEADER_ELECTION_RENEW_DEADLINE"); v != "" {
+			d, err := time.ParseDuration(v)
+			if err != nil {
+				glog.Fatalf("Unable to parse LEADER_ELECTION_RENEW_DEADLINE env var: %v", err)
+			}
+			renewDeadline = d
+		}
+		if v := os.Getenv("LEADER_ELECTION_RETRY_PERIOD"); v != "" {
+			d, err := time.ParseDuration(v)
+			if err != nil {
+				glog.Fatalf("Unable to parse LEADER_ELECTION_RETRY_PERIOD env var: %v", err)
+			}
+			retryPeriod = d
+		}
+
+		options = append(options,
+			controller.LeaseDuration(leaseDuration),
+			controller.RenewDeadline(renewDeadline),
+			controller.RetryPeriod(retryPeriod),
+		)
+
+		if leaseDuration <= renewDeadline {
+			glog.Fatalf("LEADER_ELECTION_LEASE_DURATION (%v) must be greater than LEADER_ELECTION_RENEW_DEADLINE (%v)",
+				leaseDuration, renewDeadline)
+		}
+		if renewDeadline <= retryPeriod {
+			glog.Fatalf("LEADER_ELECTION_RENEW_DEADLINE (%v) must be greater than LEADER_ELECTION_RETRY_PERIOD (%v)",
+				renewDeadline, retryPeriod)
+		}
+
+		glog.Infof("leader election: leaseDuration=%v renewDeadline=%v retryPeriod=%v",
+			leaseDuration, renewDeadline, retryPeriod)
+	}
+
 	clientNFSProvisioner := &nfsProvisioner{
 		client:      clientset,
 		server:      server,
@@ -361,7 +412,7 @@ func main() {
 		provisionerName,
 		clientNFSProvisioner,
 		serverVersion.GitVersion,
-		controller.LeaderElection(leaderElection),
+		options...,
 	)
 	// Never stops.
 	pc.Run(context.Background())
