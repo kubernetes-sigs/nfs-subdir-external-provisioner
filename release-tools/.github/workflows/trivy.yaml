@@ -1,0 +1,30 @@
+name: Run Trivy scanner for Go version vulnerabilities
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+jobs:
+  trivy:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Get Go version
+        id: go-version
+        run: |
+          GO_VERSION=$(cat prow.sh  | grep "configvar CSI_PROW_GO_VERSION_BUILD" | awk '{print $3}' | sed 's/"//g')
+          echo "version=$GO_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Run Trivy scanner for Go version vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          image-ref: 'golang:${{ steps.go-version.outputs.version }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'library'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN'
